@@ -72,7 +72,7 @@ abstract class DrawerArrowDrawable extends Drawable {
         typedArray.recycle();*/
         
         TypedValue typedValue = new TypedValue();
-        context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, typedValue, true);
+        context.getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
         int color;
         if (typedValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && typedValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
             color = typedValue.data;
