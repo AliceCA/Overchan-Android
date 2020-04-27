@@ -333,7 +333,8 @@ public class PresentationItemModel {
         }
         
         String name = sourceModel.name;
-        if (defaultName != null && name.startsWith(defaultName)) {
+        boolean showDefaultNames = MainApplication.getInstance().settings.showDefaultNames();
+        if (!showDefaultNames && defaultName != null && name.startsWith(defaultName)) {
             int trim = defaultName.length();
             while (trim < name.length() && (name.charAt(trim) == ' ' || name.charAt(trim) == '\u00A0')) ++trim;
             if (name.startsWith("ID:", trim)) {

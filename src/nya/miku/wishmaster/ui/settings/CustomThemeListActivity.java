@@ -49,7 +49,7 @@ public class CustomThemeListActivity extends ListActivity {
     
     private static final String TAG = "CustomThemeListActivity";
     
-    private static final String URL_PATH = "https://raw.githubusercontent.com/miku-nyan/Overchan-Themes/master/themes/";
+    private static final String URL_PATH = "https://raw.githubusercontent.com/overchan-project/Overchan-Themes/master/themes/";
     private static final String URL_INDEX = URL_PATH + "index.json";
     
     private ApplicationSettings settings;

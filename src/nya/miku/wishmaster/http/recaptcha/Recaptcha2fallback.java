@@ -35,7 +35,6 @@ import nya.miku.wishmaster.http.streamer.HttpRequestModel;
 import nya.miku.wishmaster.http.streamer.HttpResponseModel;
 import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.lib.base64.Base64;
-import nya.miku.wishmaster.ui.AppearanceUtils;
 import nya.miku.wishmaster.ui.CompatibilityUtils;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -124,7 +123,7 @@ public class Recaptcha2fallback extends InteractiveException {
                     final Bitmap challengeBitmap = BitmapFactory.decodeStream(imageStream);
                     
                     final String message;
-                    Matcher messageMatcher = Pattern.compile("imageselect-message(?:.*?)>(.*?)</div>").matcher(htmlChallenge);
+                    Matcher messageMatcher = Pattern.compile("imageselect-desc(?:.*?)>(.*?)</div>").matcher(htmlChallenge);
                     if (messageMatcher.find()) message = RegexUtils.removeHtmlTags(messageMatcher.group(1)); else message = null;
                     
                     final Bitmap candidateBitmap;
@@ -155,6 +154,7 @@ public class Recaptcha2fallback extends InteractiveException {
                                 candidateView.setImageBitmap(candidateBitmap);
                                 int picSize = (int) (activity.getResources().getDisplayMetrics().density * 50 + 0.5f);
                                 candidateView.setLayoutParams(new LinearLayout.LayoutParams(picSize, picSize));
+                                candidateView.setAdjustViewBounds(true);
                                 candidateView.setScaleType(ImageView.ScaleType.FIT_XY);
                                 rootLayout.addView(candidateView);
                             }
@@ -175,6 +175,7 @@ public class Recaptcha2fallback extends InteractiveException {
                             final ImageView imageView = new ImageView(activity);
                             imageView.setLayoutParams(new FrameLayout.LayoutParams(
                                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                            imageView.setAdjustViewBounds(true);
                             imageView.setScaleType(ImageView.ScaleType.FIT_XY);
                             imageView.setImageBitmap(challengeBitmap);
                             frame.addView(imageView);
@@ -182,12 +183,6 @@ public class Recaptcha2fallback extends InteractiveException {
                             final LinearLayout selector = new LinearLayout(activity);
                             selector.setLayoutParams(new FrameLayout.LayoutParams(
                                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-                            AppearanceUtils.callWhenLoaded(imageView, new Runnable() {
-                                @Override
-                                public void run() {
-                                    selector.setLayoutParams(new FrameLayout.LayoutParams(imageView.getWidth(), imageView.getHeight()));
-                                }
-                            });
                             selector.setOrientation(LinearLayout.VERTICAL);
                             selector.setWeightSum(maxY);
                             for (int y=0; y<maxY; ++y) {

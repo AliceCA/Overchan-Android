@@ -38,6 +38,7 @@ import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.ThreadModel;
 import nya.miku.wishmaster.api.util.CryptoUtils;
+import nya.miku.wishmaster.api.util.RegexUtils;
 
 /**
  * Created by Kalaver <Kalaver@users.noreply.github.com> on 03.07.2015.
@@ -45,7 +46,7 @@ import nya.miku.wishmaster.api.util.CryptoUtils;
 
 public class ArhivachBoardReader implements Closeable {
     
-    private static final Pattern DATE_PATTERN = Pattern.compile("(?:(\\d+)\\s+)?(\\w+)\\s+(?:(\\d+):(\\d+)|(\\d{4}))");
+    private static final Pattern DATE_PATTERN = Pattern.compile("(?:(\\d+)\\s+)?(\\S+)\\s+(?:(\\d+):(\\d+)|(\\d{4}))");
     private static final String[] MONTH_STRINGS = new String[] { "января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря" };
     private static final TimeZone TIME_ZONE = TimeZone.getTimeZone("GMT");
     
@@ -198,7 +199,7 @@ public class ArhivachBoardReader implements Closeable {
             if (currentPost.email == null) currentPost.email = "";
             if (currentPost.trip == null) currentPost.trip = "";
             currentPost.comment = CryptoUtils.fixCloudflareEmails(currentPost.comment);
-            currentPost.subject = CryptoUtils.fixCloudflareEmails(currentPost.subject);
+            currentPost.subject = StringEscapeUtils.unescapeHtml4(CryptoUtils.fixCloudflareEmails(currentPost.subject));
             postsBuf.add(currentPost);
         }
         initPostModel();
@@ -236,7 +237,7 @@ public class ArhivachBoardReader implements Closeable {
         }
     }
     
-    protected void parseTags(String s) throws IOException {
+    protected void parseTags(String s) {
         Matcher matcher = Pattern.compile("<a[^>]*>([^<]*)</a>",Pattern.MULTILINE).matcher(s);
         String tags="";
         while (matcher.find()) {
@@ -310,15 +311,15 @@ public class ArhivachBoardReader implements Closeable {
             String ext = model.path.substring(model.path.lastIndexOf('.') + 1).toLowerCase(Locale.US);
             if (ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg")) model.type = AttachmentModel.TYPE_IMAGE_STATIC;
             else if (ext.equals("gif")) model.type = AttachmentModel.TYPE_IMAGE_GIF;
-            else if (ext.equals("webm")) model.type = AttachmentModel.TYPE_VIDEO;
-            else if (ext.equals("mp3") || ext.equals("ogg")) model.type = AttachmentModel.TYPE_VIDEO;
+            else if (ext.equals("webm") || ext.equals("mp4")) model.type = AttachmentModel.TYPE_VIDEO;
+            else if (ext.equals("mp3") || ext.equals("ogg")) model.type = AttachmentModel.TYPE_AUDIO;
             ++currentThread.attachmentsCount;
             currentAttachments.add(model);
         }
     }
     
     private void parseDate(String date) {
-        Matcher matcher = DATE_PATTERN.matcher(date);
+        Matcher matcher = DATE_PATTERN.matcher(RegexUtils.removeHtmlTags(date));
         if (matcher.matches()) {
             int day, month, year, hour, minute;
             Calendar calendar = Calendar.getInstance(TIME_ZONE);

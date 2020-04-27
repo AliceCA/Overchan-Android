@@ -106,6 +106,12 @@ public class CompatibilityImpl {
         ActionBar actionBar = activity.getActionBar();
         if (actionBar == null || !actionBar.isShowing()) return false;
         actionBar.hide();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            View view = activity.findViewById(android.R.id.list);
+            if (view != null) {
+                view.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
+            }
+        }
         return true;
     }
     
@@ -114,6 +120,12 @@ public class CompatibilityImpl {
         ActionBar actionBar = activity.getActionBar();
         if (actionBar == null || actionBar.isShowing()) return false;
         actionBar.show();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            View view = activity.findViewById(android.R.id.list);
+            if (view != null) {
+                view.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+            }
+        }
         return true;
     }
     
@@ -136,26 +148,33 @@ public class CompatibilityImpl {
         }
     }
     
-    public static interface CustomSelectionActionModeCallback {
-        void onCreate();
-        void onClick();
-        void onDestroy();
+    public static class CustomSelectionActionModeCallback {
+        private final int titleRes;
+        private final Drawable icon;
+        public CustomSelectionActionModeCallback(final int titleRes, final Drawable icon) {
+            this.titleRes = titleRes;
+            this.icon = icon;
+        }
+        public void onCreate() {};
+        public void onClick() {};
+        public void onDestroy() {};
     }
     
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static void setCustomSelectionActionModeMenuCallback(TextView textView, final int titleRes, final Drawable icon,
-            final CustomSelectionActionModeCallback callback) {
+    public static void setCustomSelectionActionModeMenuCallback(TextView textView,
+            final CustomSelectionActionModeCallback[] callbacks) {
         textView.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 try {
-                    callback.onCreate();
-                    setShowAsActionAlways(menu.add(Menu.NONE, 1, Menu.FIRST, titleRes).setIcon(icon));
-                    menu.removeItem(android.R.id.selectAll);
-                    return true;
+                    for (int i = 0; i < callbacks.length; ++i) {
+                        callbacks[i].onCreate();
+                        setShowAsActionAlways(menu.add(Menu.NONE, i, Menu.FIRST, callbacks[i].titleRes).setIcon(callbacks[i].icon));
+                    }
                 } catch (Exception e) {
                     return false;
                 }
+                return true;
             }
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
@@ -163,16 +182,19 @@ public class CompatibilityImpl {
             }
             @Override
             public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                if (item.getItemId() == 1) {
-                    callback.onClick();
-                    mode.finish();
-                    return true;
+                int itemId = item.getItemId();
+                if (itemId < 0 || itemId >= callbacks.length) {
+                    return false;
                 }
-                return false;
+                callbacks[itemId].onClick();
+                mode.finish();
+                return true;
             }
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-                callback.onDestroy();
+                for (int i = 0; i < callbacks.length; ++i) {
+                    callbacks[i].onDestroy();
+                }
             }
         });
     }
@@ -211,6 +233,8 @@ public class CompatibilityImpl {
     
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static void setTextIsSelectable(TextView textView) {
+        textView.measure(-1, -1);
+        textView.requestLayout();
         textView.setTextIsSelectable(true);
     }
     

@@ -54,8 +54,8 @@ import nya.miku.wishmaster.lib.base64.Base64;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class LolifoxModule extends InfinityModule {
-    private static final String CHAN_NAME = "lolifox.org";
-    private static final String DEFAULT_DOMAIN = "lolifox.org";
+    private static final String CHAN_NAME = "animach.moe";
+    private static final String DEFAULT_DOMAIN = "animach.moe";
     private static final String[] DOMAINS = new String[]{DEFAULT_DOMAIN};
 
     private static final Pattern PROTECTED_URL_PATTERN = Pattern.compile("<a[^>]*href=\"https?://privatelink.de/\\?([^\"]*)\"[^>]*>");
@@ -72,7 +72,7 @@ public class LolifoxModule extends InfinityModule {
 
     @Override
     public String getDisplayingName() {
-        return "LOLIFOX";
+        return "Animach";
     }
 
     @Override

@@ -18,6 +18,9 @@
 
 package nya.miku.wishmaster.http.client;
 
+import java.util.Date;
+import android.os.Build;
+import android.webkit.CookieManager;
 import nya.miku.wishmaster.http.HttpConstants;
 import nya.miku.wishmaster.http.SSLCompatibility;
 import cz.msebera.android.httpclient.HttpHost;
@@ -25,6 +28,7 @@ import cz.msebera.android.httpclient.client.CookieStore;
 import cz.msebera.android.httpclient.client.HttpClient;
 import cz.msebera.android.httpclient.client.config.CookieSpecs;
 import cz.msebera.android.httpclient.client.config.RequestConfig;
+import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.impl.client.BasicCookieStore;
 import cz.msebera.android.httpclient.impl.client.HttpClients;
 
@@ -37,6 +41,36 @@ import cz.msebera.android.httpclient.impl.client.HttpClients;
  */
 
 public class ExtendedHttpClient extends HttpClientWrapper {
+
+    static class ExtendedCookieStore extends BasicCookieStore {
+        private static void addCookieToManager(Cookie cookie) {
+            String cookieString = cookie.getName() + "=" + cookie.getValue() + "; Domain=" + cookie.getDomain();
+            CookieManager.getInstance().setCookie(cookie.getDomain(), cookieString);
+        }
+        @Override
+        public void addCookie(Cookie cookie) {
+            addCookieToManager(cookie);
+            super.addCookie(cookie);
+        }
+        @Override
+        public void addCookies(Cookie[] cookies) {
+            for (Cookie cookie : cookies) {
+                addCookieToManager(cookie);
+            }
+            super.addCookies(cookies);
+        }
+        @Override
+        public void clear() {
+            CookieManager.getInstance().removeAllCookie();
+            super.clear();
+        }
+        @Override
+        public boolean clearExpired(Date date) {
+            CookieManager.getInstance().removeExpiredCookie();
+            return super.clearExpired(date);
+        }
+    }
+
     private final CookieStore cookieStore;
     private final HttpHost proxy;
     private volatile HttpClient httpClient;
@@ -73,7 +107,9 @@ public class ExtendedHttpClient extends HttpClientWrapper {
      */
     public ExtendedHttpClient(HttpHost proxy) {
         super();
-        this.cookieStore = new BasicCookieStore();
+        this.cookieStore = Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT
+            ? new BasicCookieStore()
+            : new ExtendedCookieStore();
         this.proxy = proxy;
     }
     

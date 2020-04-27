@@ -19,15 +19,15 @@
 package nya.miku.wishmaster.ui.presentation;
 
 import nya.miku.wishmaster.common.Logger;
+import nya.miku.wishmaster.lib.ExtendedClickableSpan;
 import android.graphics.Color;
 import android.text.Spannable;
 import android.text.TextPaint;
-import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.TextView;
 
-public class SpoilerSpan extends ClickableSpan {
+public class SpoilerSpan extends ExtendedClickableSpan {
     private static final String TAG = "SpoilerSpan";
     
     private final int foregroundColor, backgroundColor;
@@ -39,7 +39,7 @@ public class SpoilerSpan extends ClickableSpan {
     }
     
     @Override
-    public void onClick(View widget) {
+    public boolean onClickUp(View widget) {
         hidden = !hidden;
         try {
             TextView tv = (TextView) widget;
@@ -51,6 +51,7 @@ public class SpoilerSpan extends ClickableSpan {
             Logger.e(TAG, e);
         }
         widget.invalidate();
+        return true;
     }
     
     @Override

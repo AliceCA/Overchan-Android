@@ -29,12 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_email">PREF_KEY_EMAIL</string>
     <string name="pref_key_hide_personal">PREF_KEY_HIDE_PERSONAL</string>
     <string name="pref_key_ssl_certificates">PREF_KEY_SSL_CERTIFICATES</string>
+    <string name="pref_key_safe_posting">PREF_KEY_SAFE_POSTING</string>
     <string name="pref_key_random_hash">PREF_KEY_RANDOM_HASH</string>
     <string name="pref_key_show_all_chans_list">PREF_KEY_SHOW_ALL_CHANS_LIST</string>
     <string name="pref_key_show_nsfw_boards">PREF_KEY_SHOW_NSFW_BOARDS</string>
     <string name="pref_key_mask_pictures">PREF_KEY_MASK_PICTURES</string>
     <string name="pref_key_unlocked_chan_format">PREF_KEY_UNLOCKED_CHAN_%s</string>
-    <string name="pref_key_autohide">PREF_KEY_AUTOHIDE</string>
     <string name="pref_key_autohide_json">PREF_KEY_AUTOHIDE_JSON</string>
     <string name="pref_key_quickaccess_json">PREF_KEY_QUICKACCESS_JSON</string>
     <string name="pref_key_chans_order_json">PREF_KEY_CHANS_ORDER_JSON</string>
@@ -57,15 +57,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_gallery_swipe_to_close">PREF_KEY_GALLERY_SWIPE_TO_CLOSE</string>
     <string name="pref_key_gallery_scroll_thread">PREF_KEY_GALLERY_SCROLL_THREAD</string>
     <string name="pref_key_gallery_scaleimageview">PREF_KEY_GALLERY_SCALEIMAGEVIEW</string>
+    <string name="pref_key_gallery_autoplay">PREF_KEY_GALLERY_AUTOPLAY</string>
     <string name="pref_key_gallery_nativegif">PREF_KEY_GALLERY_NATIVEGIF</string>
     <string name="pref_key_gallery_videoplayer">PREF_KEY_GALLERY_VIDEOPLAYER</string>
+    <string name="pref_key_gallery_webview_videoplayer">PREF_KEY_GALLERY_WEBVIEW_VIDEOPLAYER</string>
     <string name="pref_key_do_not_download_videos">PREF_KEY_DO_NOT_DOWNLOAD_VIDEOS</string>
     <string name="pref_key_gallery_audioplayer">PREF_KEY_GALLERY_AUDIOPLAYER</string>
     <string name="pref_key_enable_autoupdate">PREF_KEY_ENABLE_AUTOUPDATE</string>
+    <string name="pref_key_autoupdate_stop_on_exit">PREF_KEY_AUTOUPDATE_STOP_ON_EXIT</string>
     <string name="pref_key_autoupdate_only_wifi">PREF_KEY_AUTOUPDATE_ONLY_WIFI</string>
     <string name="pref_key_autoupdate_delay">PREF_KEY_AUTOUPDATE_DELAY</string>
     <string name="pref_key_autoupdate_background">PREF_KEY_AUTOUPDATE_BACKGROUND</string>
     <string name="pref_key_autoupdate_notification">PREF_KEY_AUTOUPDATE_NOTIFICATION</string>
+    <string name="pref_key_autoupdate_progress">PREF_KEY_AUTOUPDATE_PROGRESS</string>
     <string name="pref_key_subscriptions_enabled">PREF_KEY_SUBSCRIPTIONS_ENABLED</string>
     <string name="pref_key_subscribe_threads">PREF_KEY_SUBSCRIBE_THREADS</string>
     <string name="pref_key_highlight_subscriptions">PREF_KEY_HIGHLIGHT_SUBSCRIPTIONS</string>
@@ -74,10 +78,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_last_clear_subscriptions">PREF_KEY_LAST_CLEAR_SUBSCRIPTIONS</string>
     <string name="pref_key_cache_maxsize">PREF_KEY_CACHE_MAXSIZE</string>
     <string name="pref_key_clear_cache">PREF_KEY_CLEAR_CACHE</string>
+    <string name="pref_key_update_on_startup">PREF_KEY_UPDATE_ON_STARTUP</string>
+    <string name="pref_key_update_allow_beta">PREF_KEY_UPDATE_ALLOW_BETA</string>
     <string name="pref_key_about_version">PREF_KEY_ABOUT_VERSION</string>
     <string name="pref_key_about_license">PREF_KEY_ABOUT_LICENSE</string>
     <string name="pref_key_download_dir">PREF_KEY_DOWNLOAD_DIR</string>
     <string name="pref_key_download_lazy">PREF_KEY_DOWNLOAD_LAZY</string>
+    <string name="pref_key_download_original_names">PREF_KEY_DOWNLOAD_ORIGINAL_NAMES</string>
     <string name="pref_key_download_thumbs">PREF_KEY_DOWNLOAD_THUMBS1</string>
     <string name="pref_download_thumbs_value_default">@string/pref_download_thumbs_value_always</string>
     <string name="pref_download_thumbs_value_always">PREF_DOWNLOAD_THUMBS_VALUE_ALWAYS</string>
@@ -103,6 +110,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_theme_value_futaba">PREF_THEME_VALUE_FUTABA</string>
     <string name="pref_theme_value_photon">PREF_THEME_VALUE_PHOTON</string>
     <string name="pref_theme_value_neutron">PREF_THEME_VALUE_NEUTRON</string>
+    <string name="pref_theme_value_burichan">PREF_THEME_VALUE_BURICHAN</string>
     <string name="pref_theme_value_gurochan">PREF_THEME_VALUE_GUROCHAN</string>
     <string name="pref_theme_value_tomorrow">PREF_THEME_VALUE_TOMORROW</string>
     <string name="pref_theme_value_mikuba">PREF_THEME_VALUE_MIKUBA</string>
@@ -112,6 +120,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item>@string/pref_theme_value_futaba</item>
         <item>@string/pref_theme_value_photon</item>
         <item>@string/pref_theme_value_neutron</item>
+        <item>@string/pref_theme_value_burichan</item>
         <item>@string/pref_theme_value_gurochan</item>
         <item>@string/pref_theme_value_tomorrow</item>
         <item>@string/pref_theme_value_mikuba</item>
@@ -120,14 +129,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </string-array>
     <string name="pref_key_font_size">PREF_KEY_FONT_SIZE</string>
     <string name="pref_font_size_value_default">@string/pref_font_size_value_small</string>
+    <string name="pref_font_size_value_micro">PREF_FONT_SIZE_VALUE_MICRO</string>
+    <string name="pref_font_size_value_very_small">PREF_FONT_SIZE_VALUE_VERY_SMALL</string>
     <string name="pref_font_size_value_small">PREF_FONT_SIZE_VALUE_SMALL</string>
-    <string name="pref_font_size_value_medium">PREF_FONT_SIZE_VALUE_MEDIUM1</string>
+    <string name="pref_font_size_value_medium">PREF_FONT_SIZE_VALUE_MEDIUM</string>
     <string name="pref_font_size_value_large">PREF_FONT_SIZE_VALUE_LARGE</string>
+    <string name="pref_font_size_value_very_large">PREF_FONT_SIZE_VALUE_VERY_LARGE</string>
     <string name="pref_font_size_value_huge">PREF_FONT_SIZE_VALUE_HUGE</string>
     <string-array name="pref_font_size_values" translatable="false">
+        <item>@string/pref_font_size_value_micro</item>
+        <item>@string/pref_font_size_value_very_small</item>
         <item>@string/pref_font_size_value_small</item>
         <item>@string/pref_font_size_value_medium</item>
         <item>@string/pref_font_size_value_large</item>
+        <item>@string/pref_font_size_value_very_large</item>
         <item>@string/pref_font_size_value_huge</item>
     </string-array>
     <string name="pref_key_sidepanel_hide">PREF_KEY_SIDEPANEL_HIDE</string>
@@ -159,25 +174,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_post_thumbnail_scale">PREF_KEY_POST_THUMBNAIL_SCALE</string>
     <string-array name="pref_post_thumbnail_scale_choices" translatable="false">
         <item>50\uff05</item>
+        <item>75\uff05</item>
         <item>100\uff05</item>
+        <item>125\uff05</item>
         <item>150\uff05</item>
+        <item>175\uff05</item>
         <item>200\uff05</item>
     </string-array>
     <string name="pref_post_thumbnail_scale_value_default">@string/pref_post_thumbnail_scale_value_100percent</string>
     <string name="pref_post_thumbnail_scale_value_50percent">PREF_POST_THUMBNAIL_SCALE_VALUE_50PERCENT</string>
+    <string name="pref_post_thumbnail_scale_value_75percent">PREF_POST_THUMBNAIL_SCALE_VALUE_75PERCENT</string>
     <string name="pref_post_thumbnail_scale_value_100percent">PREF_POST_THUMBNAIL_SCALE_VALUE_100PERCENT</string>
+    <string name="pref_post_thumbnail_scale_value_125percent">PREF_POST_THUMBNAIL_SCALE_VALUE_125PERCENT</string>
     <string name="pref_post_thumbnail_scale_value_150percent">PREF_POST_THUMBNAIL_SCALE_VALUE_150PERCENT</string>
+    <string name="pref_post_thumbnail_scale_value_175percent">PREF_POST_THUMBNAIL_SCALE_VALUE_175PERCENT</string>
     <string name="pref_post_thumbnail_scale_value_200percent">PREF_POST_THUMBNAIL_SCALE_VALUE_200PERCENT</string>
     <string-array name="pref_post_thumbnail_scale_values" translatable="false">
         <item>@string/pref_post_thumbnail_scale_value_50percent</item>
+        <item>@string/pref_post_thumbnail_scale_value_75percent</item>
         <item>@string/pref_post_thumbnail_scale_value_100percent</item>
+        <item>@string/pref_post_thumbnail_scale_value_125percent</item>
         <item>@string/pref_post_thumbnail_scale_value_150percent</item>
+        <item>@string/pref_post_thumbnail_scale_value_175percent</item>
         <item>@string/pref_post_thumbnail_scale_value_200percent</item>
     </string-array>
+    <string name="pref_key_show_default_names">PREF_KEY_SHOW_DEFAULT_NAMES</string>
+    <string name="pref_key_wide_popup_dialogs">PREF_KEY_WIDE_POPUP_DIALOGS</string>
     <string name="intent_overchan_extras">OVERCHAN_EXTRAS</string>
     <string name="intent_overchan_send_post_model">OVERCHAN_SEND_POST_MODEL</string>
     <string name="intent_overchan_quote_text">OVERCHAN_QUOTE_TEXT</string>
     <string name="intent_overchan_post_number">OVERCHAN_POST_NUMBER</string>
     <string name="intent_overchan_post_uri">OVERCHAN_POST_URI</string>
     <string name="pref_key_scroll_to_active_tab">PREF_KEY_SCROLL_TO_ACTIVE_TAB</string>
+    <string name="pref_key_web_search_url">PREF_KEY_WEB_SEARCH_URL</string>
 </resources>

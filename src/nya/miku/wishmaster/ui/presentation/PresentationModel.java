@@ -86,6 +86,7 @@ public class PresentationModel {
     public List<PresentationItemModel> presentationList = null;
     
     private ArrayList<Triple<AttachmentModel, String, String>> attachments = null;
+    private ArrayList<Triple<AttachmentModel, String, String>> attachmentsCopy = null;
     private Object lock = new Object();
     
     private HashMap<String, Integer> postNumbersMap = new HashMap<String, Integer>();
@@ -235,7 +236,10 @@ public class PresentationModel {
     
     private synchronized void updateViewModels(PostModel[] posts, boolean showIndex, CancellableTask task, RebuildCallback rebuildCallback) {
         if (task == null) task = CancellableTask.NOT_CANCELLABLE;
+        ArrayList<Triple<AttachmentModel, String, String>> copy = (attachments == null) ? null
+            : new ArrayList<Triple<AttachmentModel, String, String>>(attachments);
         synchronized (lock) {
+            attachmentsCopy = copy;
             notReady = true;
         }
         if (presentationList == null) {
@@ -364,7 +368,10 @@ public class PresentationModel {
                 presentationList.get(i).buildThreadConditionString(source.threads[i].isSticky, source.threads[i].isClosed, source.threads[i].isCyclical);
             }
         }
-        notReady = false;
+        synchronized (lock) {
+            notReady = false;
+            attachmentsCopy = null;
+        }
     }
     
     /**
@@ -386,9 +393,9 @@ public class PresentationModel {
      * @return список или null, если модель не построена или обновляется в данный момент
      */
     public List<Triple<AttachmentModel, String, String>> getAttachments() {
-        if (notReady || attachments == null) return null;
+        if (attachments == null) return null;
         synchronized (lock) {
-            if (notReady) return null;
+            if (notReady) return attachmentsCopy;
             return new ArrayList<Triple<AttachmentModel, String, String>>(attachments);
         }
     }

@@ -26,6 +26,7 @@ public class VolatileSpanClickListener implements ClickableURLSpan.URLSpanClickL
     
     public interface Listener {
         public void onURLSpanClick(View v, ClickableURLSpan span, String url, String referer);
+        public void onURLSpanLongClick(View v, ClickableURLSpan span, String url, String referer);
     }
     
     private volatile WeakReference<Listener> listenerRef;
@@ -44,6 +45,16 @@ public class VolatileSpanClickListener implements ClickableURLSpan.URLSpanClickL
             Listener listener = listenerRef.get();
             if (listener != null) {
                 listener.onURLSpanClick(v, span, url, referer);
+            }
+        }
+    }
+
+    @Override
+    public void onLongClick(View v, ClickableURLSpan span, String url, String referer) {
+        if (listenerRef != null) {
+            Listener listener = listenerRef.get();
+            if (listener != null) {
+                listener.onURLSpanLongClick(v, span, url, referer);
             }
         }
     }

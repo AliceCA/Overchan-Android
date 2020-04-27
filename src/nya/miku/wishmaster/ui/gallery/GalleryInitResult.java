@@ -29,6 +29,7 @@ import nya.miku.wishmaster.api.models.AttachmentModel;
 
 public class GalleryInitResult implements Parcelable {
     public List<Triple<AttachmentModel, String, String>> attachments;
+    public int hasMoreAttachments;
     public int initPosition;
     public boolean shouldWaitForPageLoaded;
     
@@ -38,6 +39,7 @@ public class GalleryInitResult implements Parcelable {
     public GalleryInitResult(Parcel parcel) {
         initPosition = parcel.readInt();
         shouldWaitForPageLoaded = parcel.readInt() == 1;
+        hasMoreAttachments = parcel.readInt();
         int n = parcel.readInt();
         attachments = new ArrayList<>(n);
         for (int i=0; i<n; ++i) {
@@ -60,6 +62,7 @@ public class GalleryInitResult implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(initPosition);
         dest.writeInt(shouldWaitForPageLoaded ? 1 : 0);
+        dest.writeInt(hasMoreAttachments);
         dest.writeInt(attachments.size());
         for (Triple<AttachmentModel, String, String> tuple : attachments) {
             AttachmentModel attachment = tuple.getLeft();
@@ -82,7 +85,7 @@ public class GalleryInitResult implements Parcelable {
     }
     
     public int getParcelSize() {
-        int total = 12;
+        int total = 16;
         for (Triple<AttachmentModel, String, String> tuple : attachments) {
             total += 40;
             AttachmentModel attachment = tuple.getLeft();

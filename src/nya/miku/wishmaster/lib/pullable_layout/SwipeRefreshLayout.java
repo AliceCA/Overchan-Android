@@ -590,7 +590,7 @@ public class SwipeRefreshLayout extends ViewGroup {
      *         scroll up. Override this if the child view is a custom view.
      */
     public boolean canChildScrollUp() {
-        if (android.os.Build.VERSION.SDK_INT < 14) {
+//        if (android.os.Build.VERSION.SDK_INT < 14) {
             if (mTarget instanceof AbsListView) {
                 final AbsListView absListView = (AbsListView) mTarget;
                 return absListView.getChildCount() > 0
@@ -599,16 +599,16 @@ public class SwipeRefreshLayout extends ViewGroup {
             } else {
                 return mTarget.getScrollY() > 0;
             }
-        } else {
-            return ViewCompat.canScrollVertically(mTarget, -1);
-        }
+//        } else {
+//            return ViewCompat.canScrollVertically(mTarget, -1);
+//        }
     }
     
     /**
      * Этот метод добавлен
      */
     public boolean canChildScrollDown() { //изменено
-        if (android.os.Build.VERSION.SDK_INT < 14) {
+//        if (android.os.Build.VERSION.SDK_INT < 14) {
             if (mTarget instanceof AbsListView) {
                 final AbsListView absListView = (AbsListView) mTarget;
                 return absListView.getCount() > 0 
@@ -620,9 +620,9 @@ public class SwipeRefreshLayout extends ViewGroup {
             } else {
                 return true; //остальные случаи не обрабатываются
             }
-        } else {
-            return ViewCompat.canScrollVertically(mTarget, 1);
-        }
+//        } else {
+//            return ViewCompat.canScrollVertically(mTarget, 1);
+//        }
     }
 
     /**
@@ -830,16 +830,10 @@ public class SwipeRefreshLayout extends ViewGroup {
                 final int pointerIndex = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
                 final float y; try { y = MotionEventCompat.getY(ev, pointerIndex); } catch (Exception e) { return false; }
                 final float overscrollTop = Math.abs(y - mInitialMotionY) * DRAG_RATE; //изменено
-                if (y - mInitialMotionY < 0 && canChildScrollDown()) {
-                    return false;
-                }
-                if (y - mInitialMotionY > 0 && canChildScrollUp()) {
-                    return false;
-                }   /////
                 mIsBeingDragged = false;
-                if (overscrollTop > mTotalDragDistance) {
-                    setRefreshing(true, true /* notify */);
-                } else {
+                if ((y - mInitialMotionY < 0 && canChildScrollDown()) ||
+                    (y - mInitialMotionY > 0 && canChildScrollUp()) ||
+                    (overscrollTop <= mTotalDragDistance)) {
                     // cancel refresh
                     mRefreshing = false;
                     mProgress.setStartEndTrim(0f, 0f);
@@ -866,6 +860,8 @@ public class SwipeRefreshLayout extends ViewGroup {
                     }
                     animateOffsetToStartPosition(mCurrentTargetOffsetTop, listener);
                     mProgress.showArrow(false);
+                } else {
+                    setRefreshing(true, true /* notify */);
                 }
                 mActivePointerId = INVALID_POINTER;
                 return false;

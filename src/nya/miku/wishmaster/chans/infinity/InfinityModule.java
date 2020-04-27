@@ -33,6 +33,7 @@ import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpHeaders;
 import cz.msebera.android.httpclient.NameValuePair;
 import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import cz.msebera.android.httpclient.util.TextUtils;
@@ -76,12 +77,12 @@ public class InfinityModule extends AbstractVichanModule {
     private static final String TAG = "InfinityModule";
     
     private static final String CHAN_NAME = "8chan";
-    private static final String DEFAULT_DOMAIN = "8ch.net";
-    private static final String SYSTEM_DOMAIN = "sys.8ch.net";
-    private static final String MEDIA_DOMAIN = "media.8ch.net";
-    private static final String MEDIA2_DOMAIN = "media2.8ch.net";
-    private static final String ONION_DOMAIN = "oxwugzccvk3dk6tj.onion";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8chan.co" };
+    private static final String DEFAULT_DOMAIN = "8kun.top";
+    private static final String SYSTEM_DOMAIN = "sys.8kun.top";
+    private static final String MEDIA_DOMAIN = "media.8kun.top";
+    private static final String MEDIA2_DOMAIN = "media2.8kun.top";
+    private static final String ONION_DOMAIN = "jthnx5wyvjvzsxtu.onion";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "8ch.net", "8kun.net", "8chan.co" };
     
     private static final String[] ATTACHMENT_FORMATS = new String[] { "jpg", "jpeg", "gif", "png", "webm", "mp4", "swf", "pdf" };
     private static final FastHtmlTagParser.TagReplaceHandler QUOTE_REPLACER = new FastHtmlTagParser.TagReplaceHandler() {
@@ -115,6 +116,7 @@ public class InfinityModule extends AbstractVichanModule {
     protected Set<String> boardsPostCaptcha = new HashSet<>();
     private boolean needTorCaptcha = false;
     private String torCaptchaCookie = null;
+    private String torSessionCookie = null;
     protected boolean needNewThreadCaptcha = false;
     protected String newThreadCaptchaId = null;
     
@@ -383,9 +385,17 @@ public class InfinityModule extends AbstractVichanModule {
             List<NameValuePair> pairs = new ArrayList<NameValuePair>();
             pairs.add(new BasicNameValuePair("captcha_text", answer));
             pairs.add(new BasicNameValuePair("captcha_cookie", torCaptchaCookie));
+            pairs.add(new BasicNameValuePair("tos_agree", "on"));
             HttpRequestModel rqModel = HttpRequestModel.builder().setPOST(new UrlEncodedFormEntity(pairs, "UTF-8")).setTimeout(30000).build();
             String response = HttpStreamer.getInstance().getStringFromUrl(url, rqModel, httpClient, null, task, true);
             if (response.contains("Error") && !response.contains("Success")) throw new HttpWrongStatusCodeException(400, "400");
+            torSessionCookie = null;
+            for (Cookie cookie: httpClient.getCookieStore().getCookies()) {
+                if (cookie.getName().equals("tor") && cookie.getDomain().contains(getUsingDomain())) {
+                    torSessionCookie = cookie.getValue();
+                    break;
+                }
+            }
             needTorCaptcha = false;
         } catch (HttpWrongStatusCodeException e) {
             if (task != null && task.isCancelled()) throw new InterruptedException("interrupted");
@@ -416,6 +426,8 @@ public class InfinityModule extends AbstractVichanModule {
                 addString("body", model.comment).
                 addString("post", model.threadNumber == null ? "New Topic" : "New Reply").
                 addString("board", model.boardName);
+        if (torSessionCookie != null)
+            postEntityBuilder.addString("tor", torSessionCookie);
         if (model.threadNumber != null) postEntityBuilder.addString("thread", model.threadNumber);
         if (model.custommark) postEntityBuilder.addString("spoiler", "on");
         postEntityBuilder.addString("password", TextUtils.isEmpty(model.password) ? getDefaultPassword() : model.password);

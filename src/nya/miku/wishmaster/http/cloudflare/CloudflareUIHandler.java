@@ -28,8 +28,6 @@ import nya.miku.wishmaster.http.recaptcha.Recaptcha2;
 import nya.miku.wishmaster.http.recaptcha.Recaptcha2solved;
 import cz.msebera.android.httpclient.cookie.Cookie;
 
-import java.util.Locale;
-
 import android.app.Activity;
 
 /**
@@ -99,7 +97,7 @@ import android.app.Activity;
                     Async.runAsync(new Runnable() {
                         @Override
                         public void run() {
-                            String url = String.format(Locale.US, e.getCheckCaptchaUrlFormat(), Recaptcha2solved.pop(e.getRecaptchaPublicKey()));
+                            String url = e.getCheckCaptchaUrlPrefix() + Recaptcha2solved.pop(e.getRecaptchaPublicKey());
                             Cookie cfCookie = CloudflareChecker.getInstance().
                                     checkRecaptcha(e, (ExtendedHttpClient) chan.getHttpClient(), cfTask, url);
                             if (cfCookie != null) {

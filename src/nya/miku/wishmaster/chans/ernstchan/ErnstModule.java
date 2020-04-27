@@ -19,6 +19,7 @@
 package nya.miku.wishmaster.chans.ernstchan;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +44,6 @@ import nya.miku.wishmaster.api.AbstractWakabaModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
-import nya.miku.wishmaster.api.models.CaptchaModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
@@ -60,18 +60,17 @@ import nya.miku.wishmaster.http.streamer.HttpStreamer;
 import nya.miku.wishmaster.http.streamer.HttpWrongStatusCodeException;
 
 public class ErnstModule extends AbstractWakabaModule {
-    private static final String CHAN_NAME = "ernstchan.com";
-    private static final String CHAN_DOMAIN = "ernstchan.com";
+    private static final String CHAN_NAME = "ernstchan.xyz";
+    private static final String CHAN_DOMAIN = "ernstchan.xyz";
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Passierschein A38", null, true),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "int", "No shittings during wörktime", null, false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "c", "Computer & Programmieren", null, false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "a", "Anime & Manga", null, false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "fefe", "Fefes Blog", null, true),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "meta", "Board functioning", null, false),
     };
     
     private static final Pattern THREADPAGE_PATTERN = Pattern.compile("([^/]+)/thread/(\\d+)[^#]*(?:#(\\d+))?");
     private static final Pattern BOARDPAGE_PATTERN = Pattern.compile("([^/]+)(?:/page/(\\d+))?");
+    private static final Pattern CATALOGPAGE_PATTERN = Pattern.compile("([^/]+)/catalog");
     
     public ErnstModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -117,7 +116,7 @@ public class ErnstModule extends AbstractWakabaModule {
         model.requiredFileForNewThread = true;
         model.allowDeletePosts = true;
         model.allowDeleteFiles = false;
-        model.allowNames = !shortName.equals("b") && !shortName.equals("int") && !shortName.equals("fefe");
+        model.allowNames = false;
         model.allowSubjects = true;
         model.allowSage = true;
         model.allowEmails = false;
@@ -128,6 +127,7 @@ public class ErnstModule extends AbstractWakabaModule {
         model.attachmentsMaxCount = 4;
         model.attachmentsFormatFilters = null;
         model.markType = BoardModel.MARK_BBCODE;
+        model.catalogAllowed = true;
         return model;
     }
     
@@ -148,6 +148,24 @@ public class ErnstModule extends AbstractWakabaModule {
             return threads;
         }
     }
+
+
+    @Override
+    public ThreadModel[] getCatalog(String boardName, int catalogType, ProgressListener listener, CancellableTask task, ThreadModel[] oldList)
+            throws Exception {
+        UrlPageModel urlModel = new UrlPageModel();
+        urlModel.chanName = CHAN_NAME;
+        urlModel.type = UrlPageModel.TYPE_CATALOGPAGE;
+        urlModel.boardName = boardName;
+        String url = buildUrl(urlModel);
+
+        ThreadModel[] threads = readPage(url, listener, task, oldList != null);
+        if (threads == null) {
+            return oldList;
+        } else {
+            return threads;
+        }
+    }
     
     @Override
     public PostModel[] getPostsList(String boardName, String threadNumber, ProgressListener listener, CancellableTask task, PostModel[] oldList)
@@ -159,7 +177,7 @@ public class ErnstModule extends AbstractWakabaModule {
         urlModel.threadNumber = threadNumber;
         String url = buildUrl(urlModel);
         
-        ThreadModel[] threads = (ThreadModel[]) readPage(url, listener, task, oldList != null);
+        ThreadModel[] threads = readPage(url, listener, task, oldList != null);
         if (threads == null) {
             return oldList;
         } else {
@@ -169,15 +187,16 @@ public class ErnstModule extends AbstractWakabaModule {
     }
     
     private ThreadModel[] readPage(String url, ProgressListener listener, CancellableTask task, boolean checkIfModified) throws Exception {
+        boolean catalog = url.contains("/catalog");
         HttpResponseModel responseModel = null;
-        ErnstReader in = null;
+        Closeable in = null;
         HttpRequestModel rqModel = HttpRequestModel.builder().setGET().setCheckIfModified(checkIfModified).build();
         try {
             responseModel = HttpStreamer.getInstance().getFromUrl(url, rqModel, httpClient, listener, task);
             if (responseModel.statusCode == 200) {
-                in = new ErnstReader(responseModel.stream);
+                in = catalog ? new ErnstCatalogReader(responseModel.stream) : new ErnstReader(responseModel.stream);
                 if (task != null && task.isCancelled()) throw new Exception("interrupted");
-                return in.readPage();
+                return catalog ? ((ErnstCatalogReader) in).readPage() : ((ErnstReader) in).readPage();
             } else {
                 if (responseModel.notModified()) return null;
                 byte[] html = null;
@@ -201,13 +220,6 @@ public class ErnstModule extends AbstractWakabaModule {
     }
     
     @Override
-    public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        String captchaUrl = getUsingUrl() +  "captcha.pl?key=" + (threadNumber == null ? "mainpage" : ("res" + threadNumber)) +
-                "&dummy=" + (threadNumber == null ? "" : Long.toString(Math.round(Math.random()*1000000))) + "&board=" + boardName;
-        return downloadCaptcha(captchaUrl, listener, task);
-    }
-    
-    @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         String url = getUsingUrl() + "/wakaba.pl";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
@@ -217,7 +229,6 @@ public class ErnstModule extends AbstractWakabaModule {
         if (model.sage) postEntityBuilder.addString("field2", "sage");
         postEntityBuilder.
                 addString("gb2", "thread").
-                addString("field1", model.name).
                 addString("field3", model.subject).
                 addString("field4", model.comment).
                 addString("captcha", model.captchaAnswer).
@@ -310,6 +321,9 @@ public class ErnstModule extends AbstractWakabaModule {
                 url.append(model.boardName).append("/thread/").append(model.threadNumber);
                 if (model.postNumber != null && model.postNumber.length() != 0) url.append("#").append(model.postNumber);
                 break;
+            case UrlPageModel.TYPE_CATALOGPAGE:
+                url.append(model.boardName).append("/catalog");
+                break;
             case UrlPageModel.TYPE_OTHERPAGE:
                 url.append(model.otherPath.startsWith("/") ? model.otherPath.substring(1) : model.otherPath);
                 break;
@@ -339,6 +353,14 @@ public class ErnstModule extends AbstractWakabaModule {
             model.boardName = threadPage.group(1);
             model.threadNumber = threadPage.group(2);
             model.postNumber = threadPage.group(3);
+            return model;
+        }
+
+        Matcher catalogPage = CATALOGPAGE_PATTERN.matcher(urlPath);
+        if (catalogPage.find()) {
+            model.type = UrlPageModel.TYPE_CATALOGPAGE;
+            model.boardName = catalogPage.group(1);
+            model.catalogType = 0;
             return model;
         }
         

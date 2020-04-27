@@ -2,9 +2,10 @@ buildscript {
     repositories {
         mavenCentral()
         jcenter()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:3.1.4'
     }
 }
 
@@ -12,20 +13,23 @@ apply plugin: 'com.android.application'
 
 repositories {
     mavenCentral()
+    jcenter()
+    google()
 }
 
 dependencies {
-    compile 'ch.acra:acra:4.7.0-RC.2'
-    compile 'com.android.support:support-v4:23.4.0'
-    compile 'org.apache.commons:commons-lang3:3.5'
-    compile 'cz.msebera.android:httpclient:4.4.1.2'
-    compile 'com.esotericsoftware:kryo:3.0.3'
-    compile 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
+    implementation 'com.android.support:support-v4:23.4.0'
+    implementation 'ch.acra:acra:4.7.0-RC.2'
+    implementation 'org.apache.commons:commons-lang3:3.5'
+    implementation 'cz.msebera.android:httpclient:4.5.8'
+    implementation 'com.esotericsoftware:kryo:3.0.3'
+    implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion 24
+    buildToolsVersion "27.0.3"
+    flavorDimensions "default"
     packagingOptions {
         exclude 'META-INF/INDEX.LIST'
         exclude 'META-INF/LICENSE'

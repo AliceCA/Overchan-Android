@@ -61,7 +61,11 @@ public class WakabaUtils {
     }
     
     public static UrlPageModel parseUrlPath(String path, String chanName) {
-        path = path.toLowerCase(Locale.US);
+        return parseUrlPath(path, chanName, true);
+    }
+    
+    public static UrlPageModel parseUrlPath(String path, String chanName, boolean caseInsensitive) {
+        if (caseInsensitive) path = path.toLowerCase(Locale.US);
         
         UrlPageModel model = new UrlPageModel();
         model.chanName = chanName;

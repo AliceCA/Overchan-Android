@@ -20,14 +20,15 @@ package nya.miku.wishmaster.ui.presentation;
 
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
 import android.view.View;
+import nya.miku.wishmaster.lib.ExtendedClickableSpan;
 
-public class ClickableURLSpan extends ClickableSpan {
+public class ClickableURLSpan extends ExtendedClickableSpan {
     public static interface URLSpanClickListener {
         public void onClick(View v, ClickableURLSpan span, String url, String referer);
+        public void onLongClick(View v, ClickableURLSpan span, String url, String referer);
     }
     
     private final String url;
@@ -39,12 +40,35 @@ public class ClickableURLSpan extends ClickableSpan {
     }
     
     @Override
-    public void onClick(View widget) {
-        if (listener != null) {
-            listener.onClick(widget, this, url, referer);
+    public boolean onClickDown(View widget) {
+        if (listener != null &&
+            !url.startsWith("/") &&
+            !url.startsWith("#")) {
+            return true;
+        } else {
+            return false;
         }
     }
-    
+
+    @Override
+    public boolean onClickUp(View widget) {
+        if (listener != null) {
+            listener.onClick(widget, this, url, referer);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public void onLongClick(View widget) {
+        if (listener != null &&
+            !url.startsWith("/") &&
+            !url.startsWith("#")) {
+            listener.onLongClick(widget, this, url, referer);
+        }
+    }
+
     public ClickableURLSpan setOnClickListener(URLSpanClickListener listener) {
         this.listener = listener;
         return this;

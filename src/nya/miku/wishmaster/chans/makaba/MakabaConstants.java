@@ -72,7 +72,7 @@ public class MakabaConstants {
     
     public static final String[] CAPTCHA_TYPES = new String[] { "2chaptcha", "Google Recaptcha 2", "Google Recaptcha 2 (fallback)", "Mail.ru NOCAPTCHA" };
     public static final String[] CAPTCHA_TYPES_KEYS = new String[] { "2chaptcha", "recaptcha", "recaptcha-fallback", "mailru" };
-    public static final String CAPTCHA_TYPE_DEFAULT = "recaptcha";
+    public static final String CAPTCHA_TYPE_DEFAULT = "recaptcha-fallback";
     
     public static final int CAPTCHA_2CHAPTCHA = 1;
     public static final int CAPTCHA_RECAPTCHA = 2;
@@ -86,6 +86,9 @@ public class MakabaConstants {
     public static final String PREF_KEY_CAPTCHA_TYPE = "captcha_type";
     public static final String PREF_KEY_USERCODE_COOKIE_DOMAIN = "usercode_domain";
     public static final String PREF_KEY_USERCODE_COOKIE_VALUE = "usercode_cookie";
+    public static final String PREF_KEY_NOCAPTCHA_COOKIE_VALUE = "nocaptcha_cookie";
+    public static final String PREF_KEY_NOCAPTCHA_COOKIE_DOMAIN = "nocaptcha_domain";
+    public static final String PREF_KEY_PASSCODE = "passcode";
 
     public static final String MAILRU_JS_URL = "https://api-nocaptcha.mail.ru/captcha?public_key=";
     public static final Pattern MAILRU_ID_PATTERN = Pattern.compile("id:\\s*\"([^\"]*)\"");
@@ -93,4 +96,5 @@ public class MakabaConstants {
     public static final String MAILRU_DEFAULT_CAPTCHA_URL = "https://api-nocaptcha.mail.ru/c/1";
 
     public static final String USERCODE_COOKIE_NAME = "usercode_auth";
+    public static final String USERCODE_NOCAPTCHA_COOKIE_NAME = "passcode_auth";
 }

@@ -19,6 +19,7 @@
 package nya.miku.wishmaster.ui.gallery;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import android.graphics.Bitmap;
 import nya.miku.wishmaster.common.Logger;
@@ -36,11 +37,26 @@ public class GalleryRemote {
     
     public GalleryInitResult getInitResult() {
         try {
-            GalleryInitResult result = binder.getInitResult(contextId);
-            if (result == null || result.attachments == null) {
+            GalleryInitResult part = binder.getInitResult(contextId);
+            if (part == null || part.attachments == null) {
                 Logger.e(TAG, "returned null");
                 return null;
             }
+            if (part.hasMoreAttachments == 0)
+                return part;
+            GalleryInitResult result = new GalleryInitResult();
+            result.initPosition = part.initPosition;
+            result.shouldWaitForPageLoaded = part.shouldWaitForPageLoaded;
+            result.attachments = new ArrayList<>(part.attachments.size() + part.hasMoreAttachments);
+            result.attachments.addAll(part.attachments);
+            do {
+                part = binder.getInitResult(contextId);
+                if (part == null || part.attachments == null) {
+                    Logger.e(TAG, "returned null");
+                    return null;
+                }
+                result.attachments.addAll(part.attachments);
+            } while (part.hasMoreAttachments > 0);
             return result;
         } catch (Exception e) {
             Logger.e(TAG, e);
@@ -75,9 +91,9 @@ public class GalleryRemote {
         }
     }
     
-    public File getAttachment(GalleryAttachmentInfo attachment, GalleryGetterCallback callback) {
+    public File getAttachment(GalleryAttachmentInfo attachment, boolean localOnly, GalleryGetterCallback callback) {
         try {
-            String path = binder.getAttachment(contextId, attachment, callback);
+            String path = binder.getAttachment(contextId, attachment, localOnly, callback);
             if (path == null) return null;
             return new File(path);
         } catch (Exception e) {
@@ -95,9 +111,18 @@ public class GalleryRemote {
         }
     }
     
-    public void tryScrollParent(String postNumber) {
+    public String getAttachmentInfoString(GalleryAttachmentInfo attachment) {
         try {
-            binder.tryScrollParent(contextId, postNumber);
+            return binder.getAttachmentInfoString(contextId, attachment);
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+            return null;
+        }
+    }
+
+    public void tryScrollParent(String postNumber, boolean closeDialogs) {
+        try {
+            binder.tryScrollParent(contextId, postNumber, closeDialogs);
         } catch (Exception e) {
             Logger.e(TAG, e);
         }

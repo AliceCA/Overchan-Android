@@ -37,6 +37,7 @@ import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.common.Async;
 import nya.miku.wishmaster.common.Logger;
+import nya.miku.wishmaster.lib.ClickableToast;
 import nya.miku.wishmaster.lib.gallery.FixedSubsamplingScaleImageView;
 import nya.miku.wishmaster.lib.gallery.JSWebView;
 import nya.miku.wishmaster.lib.gallery.Jpeg;
@@ -44,6 +45,7 @@ import nya.miku.wishmaster.lib.gallery.TouchGifView;
 import nya.miku.wishmaster.lib.gallery.WebViewFixed;
 import nya.miku.wishmaster.lib.gallery.verticalviewpager.VerticalViewPagerFixed;
 import nya.miku.wishmaster.lib.gifdrawable.GifDrawable;
+import nya.miku.wishmaster.lib.UriFileUtils;
 import nya.miku.wishmaster.ui.AppearanceUtils;
 import nya.miku.wishmaster.ui.Attachments;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
@@ -55,6 +57,7 @@ import nya.miku.wishmaster.ui.settings.ApplicationSettings;
 import nya.miku.wishmaster.ui.tabs.UrlHandler;
 import nya.miku.wishmaster.ui.theme.ThemeUtils;
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -85,6 +88,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -92,8 +96,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebResourceError;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -101,7 +109,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-public class GalleryActivity extends Activity implements View.OnClickListener {
+public class GalleryActivity extends Activity implements View.OnClickListener, View.OnLongClickListener {
     private static final String TAG = "GalleryActivity";
     
     public static final String EXTRA_SETTINGS = "settings";
@@ -110,20 +118,27 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     public static final String EXTRA_BOARDMODEL = "boardmodel";
     public static final String EXTRA_PAGEHASH = "pagehash";
     public static final String EXTRA_LOCALFILENAME = "localfilename";
+    public static final String EXTRA_FROMTHREAD = "fromthread";
+    public static final String EXTRA_FROMDIALOG = "fromdialog";
     
     @SuppressLint("InlinedApi")
     private static final int BINDING_FLAGS = Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT;
     
     private static final int REQUEST_HANDLE_INTERACTIVE_EXCEPTION = 1;
     
+    private static final String initialTitleText = new String(new char[128]).replaceAll(".", " ");
+
     private LayoutInflater inflater;
     private ExecutorService tnDownloadingExecutor;
     
+    private boolean fromThread;
+    private boolean fromDialog;
     private BoardModel boardModel;
     private String chan;
     
     private ProgressBar progressBar;
     private ViewPager viewPager;
+    private WebView webView;
     private TextView navigationInfo;
     private SparseArray<View> instantiatedViews;
     
@@ -139,7 +154,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     private boolean firstScroll = true;
     
     private Menu menu;
+    private boolean loadingError;
     private boolean currentLoaded;
+    private TextView titleView;
     
     private static class ProgressHandler extends Handler {
         private final WeakReference<GalleryActivity> reference;
@@ -154,7 +171,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             if (activity == null) return;
             int progress = msg.arg1;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                if (progress != Window.PROGRESS_END) {
+                if (progress < Window.PROGRESS_END) {
                     if (activity.progressBar.getVisibility() == View.GONE) activity.progressBar.setVisibility(View.VISIBLE);
                     activity.progressBar.setProgress(progress);
                 } else {
@@ -240,6 +257,20 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         viewPager = (ViewPager) findViewById(R.id.gallery_viewpager);
         navigationInfo = (TextView) findViewById(R.id.gallery_navigation_info);
         for (int id : new int[] { R.id.gallery_navigation_previous, R.id.gallery_navigation_next }) findViewById(id).setOnClickListener(this);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        View customView = getLayoutInflater().inflate(R.layout.action_bar_title, null);
+        titleView = (TextView)customView.findViewById(R.id.action_bar_title);
+        titleView.setText(initialTitleText);
+        titleView.setOnClickListener(this);
+        titleView.setOnLongClickListener(this);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            titleView.setPadding(10, 0, 0, 0);
+            titleView.setLines(1);
+        }
+        actionBar.setCustomView(customView);
         
         bindService(new Intent(this, GalleryBackend.class), new ServiceConnection() {
             { serviceConnection = this; }
@@ -250,6 +281,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 try {
                     GalleryInitData initData = new GalleryInitData(getIntent(), savedInstanceState);
                     boardModel = initData.boardModel;
+                    fromThread = initData.fromThread;
+                    fromDialog = initData.fromDialog;
                     chan = boardModel.chan;
                     remote = new GalleryRemote(galleryBinder, galleryBinder.initContext(initData));
                     GalleryInitResult initResult = remote.getInitResult();
@@ -314,6 +347,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         }, new IntentFilter(BoardFragment.BROADCAST_PAGE_LOADED));
     }
     
+    private void stopWebView() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -324,6 +364,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopWebView();
         if (instantiatedViews != null) {
             for (int i=0; i<instantiatedViews.size(); ++i) {
                 View v = instantiatedViews.valueAt(i);
@@ -340,6 +381,19 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     @Override
+    public boolean onLongClick(View v) {
+        switch (v.getId()) {
+            case R.id.action_bar_title:
+                if (fromDialog || fromThread) {
+                    remote.tryScrollParent(attachments.get(currentPosition).getRight(), fromDialog);
+                }
+                finish();
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.gallery_navigation_previous:
@@ -353,6 +407,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                     viewPager.setCurrentItem(++currentPosition);
                     updateItem();
                 }
+                break;
+            case R.id.action_bar_title:
+                GalleryItemViewTag tag = getCurrentTag();
+                String info = remote.getAttachmentInfoString(new GalleryAttachmentInfo(tag.attachmentModel, tag.attachmentHash));
+                Toast toast = Toast.makeText(this, info, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, navigationInfo.getHeight() * 10 / 8);
+                toast.show();
                 break;
         }
     }
@@ -390,8 +451,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         }
         GalleryItemViewTag tag = (GalleryItemViewTag) current.getTag();
         boolean externalVideo = tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && settings.doNotDownloadVideos();
-        menu.findItem(R.id.menu_update).setVisible(!currentLoaded);
-        menu.findItem(R.id.menu_save_attachment).setVisible(externalVideo ||
+        menu.findItem(R.id.menu_update).setVisible(!currentLoaded && !externalVideo || loadingError);
+        menu.findItem(R.id.menu_save_attachment).setVisible((externalVideo && !loadingError) ||
                 (currentLoaded && tag.attachmentModel.type != AttachmentModel.TYPE_OTHER_NOTFILE));
         menu.findItem(R.id.menu_open_external).setVisible(currentLoaded && (tag.attachmentModel.type == AttachmentModel.TYPE_OTHER_FILE ||
                 tag.attachmentModel.type == AttachmentModel.TYPE_AUDIO || tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO));
@@ -444,16 +505,21 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         GalleryItemViewTag tag = getCurrentTag();
         if (tag == null) return;
         DownloadingService.DownloadingQueueItem queueItem = new DownloadingService.DownloadingQueueItem(tag.attachmentModel, boardModel);
-        String fileName = Attachments.getAttachmentLocalFileName(tag.attachmentModel, boardModel);
-        String itemName = Attachments.getAttachmentLocalShortName(tag.attachmentModel, boardModel);
+        String fileName = Attachments.getAttachmentLocalFileName(tag.attachmentModel, boardModel, settings.isDownloadOriginalNames());
+        String itemName = Attachments.getAttachmentLocalShortName(tag.attachmentModel, boardModel, settings.isDownloadOriginalNames());
         if (DownloadingService.isInQueue(queueItem)) {
             Toast.makeText(this, getString(R.string.notification_download_already_in_queue, itemName), Toast.LENGTH_LONG).show();
         } else {
+            final Intent downloadIntent = new Intent(this, DownloadingService.class);
+            downloadIntent.putExtra(DownloadingService.EXTRA_DOWNLOADING_ITEM, queueItem);
             if (new File(new File(settings.getDownloadDirectory(), chan), fileName).exists()) {
-                Toast.makeText(this, getString(R.string.notification_download_already_exists, fileName), Toast.LENGTH_LONG).show();
+                ClickableToast.showText(this, getString(R.string.notification_download_already_exists, fileName), new ClickableToast.OnClickListener() {
+                    @Override
+                    public void onClick() {
+                        startService(downloadIntent);
+                    }
+                });
             } else {
-                Intent downloadIntent = new Intent(this, DownloadingService.class);
-                downloadIntent.putExtra(DownloadingService.EXTRA_DOWNLOADING_ITEM, queueItem);
                 startService(downloadIntent);
             }
         }
@@ -475,8 +541,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 break;
         }
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.fromFile(tag.file), mime);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setDataAndType(UriFileUtils.getContentUri(this, tag.file), mime);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         startActivity(intent);
     }
     
@@ -542,7 +608,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 break;
         }
         Logger.d(TAG, shareIntent.getType());
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(tag.file));
+        shareIntent.putExtra(Intent.EXTRA_STREAM, UriFileUtils.getContentUri(this, tag.file));
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_via)));
     }
     
@@ -676,9 +742,20 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         if (requestCode == REQUEST_HANDLE_INTERACTIVE_EXCEPTION && resultCode == RESULT_OK) updateItem();
     }
     
+    private void setTitle(String title) {
+        final String text = title.replaceAll(".(?!$)", "$0\u200b");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                titleView.setText(text);
+            }
+        });
+    }
+
     private void updateItem() {
+        stopWebView();
         AttachmentModel attachment = attachments.get(currentPosition).getLeft();
-        if (settings.scrollThreadFromGallery() && !firstScroll) remote.tryScrollParent(attachments.get(currentPosition).getRight());
+        if (settings.scrollThreadFromGallery() && !firstScroll && !fromDialog) remote.tryScrollParent(attachments.get(currentPosition).getRight(), false);
         firstScroll = false;
         String navText = attachment.size == -1 ? (currentPosition + 1) + "/" + attachments.size() :
                 (currentPosition + 1) + "/" + attachments.size() + " (" + Attachments.getAttachmentSizeString(attachment, getResources()) + ")";
@@ -701,6 +778,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         GalleryItemViewTag tag = getCurrentTag();
         if (tag == null) return;
         currentLoaded = false;
+        loadingError = false;
         updateMenu();
         tag.downloadingTask = new AttachmentGetter(tag);
         tag.loadingView.setVisibility(View.VISIBLE);
@@ -717,7 +795,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         @Override
         public void run() {
             if (tag.attachmentModel.type == AttachmentModel.TYPE_OTHER_NOTFILE ||
-                    (settings.doNotDownloadVideos() && tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO)) {
+                (tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && settings.doNotDownloadVideos() && !settings.useInternalVideoPlayer())) {
                 setExternalLink(tag);
                 return;
             } else if (tag.attachmentModel.path == null || tag.attachmentModel.path.length() == 0) {
@@ -725,7 +803,8 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 return;
             }
             final String[] exception = new String[1];
-            File file = remote.getAttachment(new GalleryAttachmentInfo(tag.attachmentModel, tag.attachmentHash), new AbstractGetterCallback(this) {
+            boolean localOnly = (tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && settings.useWebViewVideoPlayer() && settings.doNotDownloadVideos());
+            File file = remote.getAttachment(new GalleryAttachmentInfo(tag.attachmentModel, tag.attachmentHash), localOnly, new AbstractGetterCallback(this) {
                 @Override
                 public void showLoading() {
                     runOnUiThread(new Runnable() {
@@ -750,16 +829,19 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             
             if (isCancelled()) return;
             if (file == null) {
-                showError(tag, exception[0]);
-                return;
+                if (!localOnly) {
+                    showError(tag, exception[0]);
+                    return;
+                }
+            } else {
+                currentLoaded = true;
+                tag.file = file;
             }
-            tag.file = file;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (isCancelled()) return;
                     hideProgress();
-                    currentLoaded = true;
                     updateMenu();
                 }
             });
@@ -774,7 +856,11 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                     setSvg(tag, file);
                     break;
                 case AttachmentModel.TYPE_VIDEO:
-                    setVideo(tag, file);
+                    if (settings.useWebViewVideoPlayer()) {
+                        setWebView(tag, file);
+                    } else {
+                        setVideo(tag, file);
+                    }
                     break;
                 case AttachmentModel.TYPE_AUDIO:
                     setAudio(tag, file);
@@ -789,11 +875,13 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     
     private void showError(final GalleryItemViewTag tag, final String message) {
         if (tag.downloadingTask.isCancelled()) return;
+        loadingError = true;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (tag.downloadingTask.isCancelled()) return;
                 hideProgress();
+                updateMenu();
                 tag.layout.setVisibility(View.GONE);
                 recycleTag(tag, true);
                 tag.thumbnailView.setVisibility(View.GONE);
@@ -926,70 +1014,89 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     private void setVideo(final GalleryItemViewTag tag, final File file) {
-        runOnUiThread(new Runnable() {
+        final Runnable startVideoView = new Runnable() {
             @Override
             public void run() {
-                setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                recycleTag(tag, false);
+                tag.thumbnailView.setVisibility(View.GONE);
+                tag.loadingView.setVisibility(View.GONE);
+                tag.layout.setVisibility(View.VISIBLE);
+                View videoContainer = inflater.inflate(R.layout.gallery_videoplayer, tag.layout);
+                final VideoView videoView = (VideoView)videoContainer.findViewById(R.id.gallery_video_view);
+                final TextView durationView = (TextView)videoContainer.findViewById(R.id.gallery_video_duration);
+
+                videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                     @Override
-                    public void onClick(View v) {
-                        if (!settings.useInternalVideoPlayer()) {
-                            openExternal();
-                        } else {
-                            recycleTag(tag, false);
-                            tag.thumbnailView.setVisibility(View.GONE);
-                            View videoContainer = inflater.inflate(R.layout.gallery_videoplayer, tag.layout);
-                            final VideoView videoView = (VideoView)videoContainer.findViewById(R.id.gallery_video_view);
-                            final TextView durationView = (TextView)videoContainer.findViewById(R.id.gallery_video_duration);
-                            
-                            videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                @Override
-                                public void onPrepared(final MediaPlayer mp) {
-                                    mp.setLooping(true);
-                                    
-                                    durationView.setText("00:00 / " + formatMediaPlayerTime(mp.getDuration()));
-                                    
-                                    tag.timer = new Timer();
-                                    tag.timer.schedule(new TimerTask() {
-                                        @Override
-                                        public void run() {
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    try {
-                                                        durationView.setText(formatMediaPlayerTime(mp.getCurrentPosition()) + " / " +
-                                                                formatMediaPlayerTime(mp.getDuration()));
-                                                    } catch (Exception e) {
-                                                        Logger.e(TAG, e);
-                                                        tag.timer.cancel();
-                                                    }
-                                                }
-                                            });
+                    public void onPrepared(final MediaPlayer mp) {
+                        mp.setLooping(true);
+
+                        durationView.setText("00:00 / " + formatMediaPlayerTime(mp.getDuration()));
+
+                        tag.timer = new Timer();
+                        tag.timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            durationView.setText(formatMediaPlayerTime(mp.getCurrentPosition()) + " / " +
+                                                    formatMediaPlayerTime(mp.getDuration()));
+                                        } catch (Exception e) {
+                                            Logger.e(TAG, e);
+                                            tag.timer.cancel();
                                         }
-                                    }, 1000, 1000);
-                                    
-                                    videoView.start();
-                                }
-                            });
-                            videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                                @Override
-                                public boolean onError(MediaPlayer mp, int what, int extra) {
-                                    Logger.e(TAG, "(Video) Error code: " + what);
-                                    if (tag.timer != null) tag.timer.cancel();
-                                    showError(tag, getString(R.string.gallery_error_play));
-                                    return true;
-                                }
-                            });
-                            
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
-                                CompatibilityImpl.setVideoViewZOrderOnTop(videoView);
+                                    }
+                                });
                             }
-                            videoView.setVideoPath(file.getAbsolutePath());
-                        }
+                        }, 1000, 1000);
+
+                        videoView.start();
                     }
-                    
                 });
+                videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                    @Override
+                    public boolean onError(MediaPlayer mp, int what, int extra) {
+                        Logger.e(TAG, "(Video) Error code: " + what);
+                        if (tag.timer != null) tag.timer.cancel();
+                        showError(tag, getString(R.string.gallery_error_play));
+                        return true;
+                    }
+                });
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
+                    CompatibilityImpl.setVideoViewZOrderOnTop(videoView);
+                }
+                videoView.setVideoPath(file.getAbsolutePath());
             }
-        });
+        };
+        if (!settings.useInternalVideoPlayer()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            openExternal();
+                        }
+                    });
+                }
+            });
+        } else if (!settings.autoplayMedia()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            runOnUiThread(startVideoView);
+                        }
+                    });
+                }
+            });
+        } else {
+            runOnUiThread(startVideoView);
+        }
     }
     
     private void setAudio(final GalleryItemViewTag tag, final File file) {
@@ -1121,7 +1228,7 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
     }
     
     private void setWebView(final GalleryItemViewTag tag, final File file) {
-        runOnUiThread(new Runnable() {
+        final Runnable startWebView = new Runnable() {
             private boolean oomFlag = false;
             
             private final ViewGroup.LayoutParams MATCH_PARAMS =
@@ -1134,7 +1241,6 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
                     CompatibilityImpl.setScrollbarFadingEnabled(webView, true);
                 }
-
                 WebSettings settings = webView.getSettings();
                 settings.setBuiltInZoomControls(true);
                 settings.setSupportZoom(true);
@@ -1145,11 +1251,12 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 }
                 settings.setUseWideViewPort(true);
                 settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-                    CompatibilityImpl.setBlockNetworkLoads(settings, true);
+                    CompatibilityImpl.setBlockNetworkLoads(settings, false);
                 }
-                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    settings.setMediaPlaybackRequiresUserGesture(false);
+                }
                 setScaleWebView(webView);
             }
             
@@ -1196,6 +1303,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             }
             
             private Point getImageSize(File file) {
+                if (file == null) {
+                    return new Point(0, 0);
+                }
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inJustDecodeBounds = true;
                 BitmapFactory.decodeFile(file.getAbsolutePath(), options);
@@ -1203,6 +1313,9 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             }
             
             private boolean useFallback(File file) {
+                if (file == null) {
+                    return true;
+                }
                 String path = file.getPath().toLowerCase(Locale.US);
                 if (path.endsWith(".png")) return false;
                 if (path.endsWith(".jpg")) return false;
@@ -1216,12 +1329,47 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
             public void run() {
                 try {
                     recycleTag(tag, false);
-                    WebView webView = new WebViewFixed(GalleryActivity.this);
+                    webView = new WebViewFixed(GalleryActivity.this);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        webView.setWebViewClient(new WebViewClient() {
+                            @Override
+                            public void onReceivedError(WebView webView, WebResourceRequest request, WebResourceError error) {
+                                if ((error.getErrorCode() == WebViewClient.ERROR_TOO_MANY_REQUESTS) ||
+                                    (error.getErrorCode() == WebViewClient.ERROR_UNKNOWN)) {
+                                    return;
+                                }
+                                showError(tag, "LOAD ERROR " + error.getErrorCode() + "\n" + error.getDescription().toString());
+                            }
+                            @Override
+                            public void onReceivedHttpError(WebView webView, WebResourceRequest request, WebResourceResponse error) {
+                                if (error.getStatusCode() == 404) {
+                                    showError(tag, "404 - Not Found");
+                                    return;
+                                }
+                                showError(tag, "HTTP ERROR " + error.getStatusCode());
+                            }
+                        });
+                    } else {
+                        webView.setWebViewClient(new WebViewClient() {
+                            @Override
+                            public void onReceivedError(WebView webView, int errorCode, String description, String failingUrl) {
+                                if ((errorCode == WebViewClient.ERROR_TOO_MANY_REQUESTS) ||
+                                    (errorCode == WebViewClient.ERROR_UNKNOWN)) {
+                                    return;
+                                }
+                                showError(tag, "LOAD ERROR " + errorCode + "\n" + description);
+                            }
+                        });
+                    }
                     webView.setLayoutParams(MATCH_PARAMS);
                     tag.layout.addView(webView);
                     if (settings.fallbackWebView() || useFallback(file)) {
                         prepareWebView(webView);
-                        webView.loadUrl(Uri.fromFile(file).toString());
+                        if (file == null) {
+                            webView.loadUrl(remote.getAbsoluteUrl(tag.attachmentModel.path));
+                        } else {
+                            webView.loadUrl(Uri.fromFile(file).toString());
+                        }
                     } else {
                         JSWebView.setImage(webView, file);
                     }
@@ -1238,25 +1386,48 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
                 }
             }
             
-        });
+        };
+        if (tag.attachmentModel.type == AttachmentModel.TYPE_VIDEO && !settings.autoplayMedia()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setOnClickView(tag, getString(R.string.gallery_tap_to_play), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            runOnUiThread(startWebView);
+                        }
+                    });
+                }
+            });
+        } else {
+            runOnUiThread(startWebView);
+        }
     }
     
     public static interface FullscreenCallback {
         void showUI(boolean hideAfterDelay);
         void keepUI(boolean hideAfterDelay);
+        void hideUI();
+        boolean isUIVisible();
     }
     
     private FullscreenCallback fullscreenCallback;
     private GestureDetector fullscreenGestureDetector;
+    private boolean ignoreNextUp = false;
     
     public void setFullscreenCallback(FullscreenCallback fullscreenCallback) {
         if (fullscreenGestureDetector == null) {
             fullscreenGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
                 @Override
-                public boolean onSingleTapConfirmed(MotionEvent e) {
+                public void onLongPress(MotionEvent event) {
                     FullscreenCallback fullscreenCallback = GalleryActivity.this.fullscreenCallback;
-                    if (fullscreenCallback != null) fullscreenCallback.showUI(true);
-                    return true;
+                    if (fullscreenCallback != null) {
+                        if (fullscreenCallback.isUIVisible())
+                            fullscreenCallback.hideUI();
+                        else
+                            fullscreenCallback.showUI(true);
+                        ignoreNextUp = true;
+                    }
                 }
             });
         }
@@ -1268,6 +1439,10 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         if (fullscreenCallback != null) {
             fullscreenCallback.keepUI(MotionEventCompat.getActionMasked(ev) == MotionEvent.ACTION_UP);
             fullscreenGestureDetector.onTouchEvent(ev);
+        }
+        if (ignoreNextUp && MotionEventCompat.getActionMasked(ev) == MotionEvent.ACTION_UP) {
+            ignoreNextUp = false;
+            return true;
         }
         return super.dispatchTouchEvent(ev);
     }
@@ -1284,6 +1459,29 @@ public class GalleryActivity extends Activity implements View.OnClickListener {
         return super.onMenuOpened(featureId, menu);
     }
     
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                event.startTracking();
+                return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BACK:
+                if (fromDialog || fromThread) {
+                    remote.tryScrollParent(attachments.get(currentPosition).getRight(), fromDialog);
+                }
+                finish();
+                return true;
+        }
+        return super.onKeyLongPress(keyCode, event);
+    }
+
     private class GalleryItemViewTag {
         public CancellableTask downloadingTask;
         public Timer timer;

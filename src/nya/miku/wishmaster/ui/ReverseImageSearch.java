@@ -31,7 +31,7 @@ import nya.miku.wishmaster.ui.tabs.UrlHandler;
 public class ReverseImageSearch {
     public static final List<ReverseImageService> SERVICES = Arrays.asList(
             new ReverseImageService("Google", "http://www.google.com/searchbyimage?image_url=%s"),
-            new ReverseImageService("Yandex", "http://www.yandex.ru/images/search?img_url=%s&rpt=imageview"),
+            new ReverseImageService("Yandex", "http://www.yandex.ru/images/search?url=%s&rpt=imageview"),
             new ReverseImageService("TinEye", "http://www.tineye.com/search?url=%s"),
             new ReverseImageService("ImgOps", "http://imgops.com/%s")
     );

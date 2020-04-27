@@ -114,7 +114,7 @@ public class TirechModule extends AbstractWakabaModule {
     
     @Override
     protected boolean canHttps() {
-        return false;
+        return true;
     }
     
     @Override
@@ -139,6 +139,7 @@ public class TirechModule extends AbstractWakabaModule {
         domainPref.getEditText().setSingleLine();
         domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         preferenceGroup.addPreference(domainPref);
+        addHttpsPreference(preferenceGroup, true);
         addPasswordPreference(preferenceGroup);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);

@@ -18,10 +18,15 @@
 
 package nya.miku.wishmaster.chans.tbpchan;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.preference.EditTextPreference;
+import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputType;
+import android.text.TextUtils;
 
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractVichanModule;
@@ -35,6 +40,9 @@ import nya.miku.wishmaster.api.util.ChanModels;
 public class TBPchanModule extends AbstractVichanModule {
 
     private static final String CHAN_NAME = "tbpchan.net";
+    private static final String DEFAULT_DOMAIN = "tbpchan.cz";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "tbpchan.net" };
+    private static final String DOMAINS_HINT = "tbpchan.cz, tbpchan.net";
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[]{
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "a", "Anime & Manga", "", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "adv", "Advice", "", false),
@@ -87,6 +95,7 @@ public class TBPchanModule extends AbstractVichanModule {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "wx", "Animated", "", true),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "x", "Paranormal", "", false),
     };
+    private static final String PREF_KEY_DOMAIN = "domain";
 
     public TBPchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -99,7 +108,7 @@ public class TBPchanModule extends AbstractVichanModule {
 
     @Override
     public String getDisplayingName() {
-        return "TBPchan.net";
+        return "TBPchan";
     }
 
     @Override
@@ -109,7 +118,33 @@ public class TBPchanModule extends AbstractVichanModule {
 
     @Override
     protected String getUsingDomain() {
-        return "tbpchan.net";
+        String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
+        return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
+    }
+
+    @Override
+    protected String[] getAllDomains() {
+        String domain = getUsingDomain();
+        for (String d : DOMAINS) if (domain.equals(d)) return DOMAINS;
+        String[] domains = new String[DOMAINS.length + 1];
+        for (int i=0; i<DOMAINS.length; ++i) domains[i] = DOMAINS[i];
+        domains[DOMAINS.length] = domain;
+        return domains;
+    }
+
+    @Override
+    public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
+        Context context = preferenceGroup.getContext();
+        EditTextPreference domainPref = new EditTextPreference(context);
+        domainPref.setTitle(R.string.pref_domain);
+        domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setSummary(resources.getString(R.string.pref_domain_summary, DOMAINS_HINT));
+        domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        preferenceGroup.addPreference(domainPref);
+        super.addPreferencesOnScreen(preferenceGroup);
     }
 
     @Override

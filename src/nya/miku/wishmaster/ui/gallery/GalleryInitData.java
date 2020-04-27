@@ -32,6 +32,8 @@ public class GalleryInitData implements Parcelable {
     public BoardModel boardModel;
     public String pageHash;
     public String localFileName;
+    public boolean fromThread;
+    public boolean fromDialog;
     
     public GalleryInitData(Intent intent, Bundle bundle) {
         attachment = (AttachmentModel) intent.getSerializableExtra(GalleryActivity.EXTRA_ATTACHMENT);
@@ -40,6 +42,8 @@ public class GalleryInitData implements Parcelable {
         pageHash = intent.getStringExtra(GalleryActivity.EXTRA_PAGEHASH);
         localFileName = intent.getStringExtra(GalleryActivity.EXTRA_LOCALFILENAME);
         attachmentHash = intent.getStringExtra(GalleryActivity.EXTRA_SAVED_ATTACHMENTHASH);
+        fromDialog = intent.getBooleanExtra(GalleryActivity.EXTRA_FROMDIALOG, false);
+        fromThread = intent.getBooleanExtra(GalleryActivity.EXTRA_FROMTHREAD, false);
         if (attachmentHash == null && bundle != null) attachmentHash = bundle.getString(GalleryActivity.EXTRA_SAVED_ATTACHMENTHASH);
         if (attachmentHash == null) attachmentHash = ChanModels.hashAttachmentModel(attachment);
     }

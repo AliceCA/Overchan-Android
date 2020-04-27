@@ -64,7 +64,7 @@ public class NewNullchanJsonMapper {
         model.allowReport = BoardModel.REPORT_WITH_COMMENT;
         model.allowNames = false;
         model.allowSubjects = false;
-        model.allowSage = false;
+        model.allowSage = true;
         model.allowEmails = false;
         model.allowCustomMark = false;
         model.allowRandomHash = true;

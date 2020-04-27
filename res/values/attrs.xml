@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <attr name="materialNavigationBar" format="color|reference" />
         
         <attr name="activityRootBackground" format="color|reference" />
+        <attr name="sidebarForeground" format="color|reference" />
         <attr name="sidebarBackground" format="color|reference" />
         <attr name="sidebarSelectedItem" format="color|reference" />
         <attr name="listSeparatorBackground" format="color|reference" />

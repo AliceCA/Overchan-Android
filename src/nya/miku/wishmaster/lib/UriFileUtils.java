@@ -9,7 +9,10 @@
 package nya.miku.wishmaster.lib;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
+import android.app.Activity;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -17,11 +20,17 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.BaseColumns;
+import android.provider.OpenableColumns;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
+import android.support.v4.content.FileProvider;
+import nya.miku.wishmaster.common.IOUtils;
+import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
 
 public class UriFileUtils {
+    private static final String TAG = "UriFileUtils";
+
     /**
      * Get a file path from a Uri. This will get the the path for Storage Access
      * Framework Documents, as well as the _data field for the MediaStore and
@@ -67,9 +76,16 @@ public class UriFileUtils {
             else if (isDownloadsDocument(uri)) {
 
                 final String id = CompatibilityImpl.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
-                return getDataColumn(context, contentUri, null, null);
+                if (id.startsWith("raw:")) {
+                    return id.substring(4);
+                }
+                try {
+                    final Uri contentUri = ContentUris.withAppendedId(
+                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                    return getDataColumn(context, contentUri, null, null);
+                } catch (Exception e) {
+                    return null;
+                }
             }
             // MediaProvider
             else if (isMediaDocument(uri)) {
@@ -110,6 +126,10 @@ public class UriFileUtils {
         return null;
     }
     
+    public static Uri getContentUri(Activity activity, File file) {
+        return FileProvider.getUriForFile(activity, activity.getPackageName() + ".provider", file);
+    }
+
     private static boolean isKitKatDocument(Context context, Uri uri) {
         if (Build.VERSION.SDK_INT < 19) {
             return false;
@@ -145,6 +165,8 @@ public class UriFileUtils {
                 final int column_index = cursor.getColumnIndexOrThrow(column);
                 return cursor.getString(column_index);
             }
+        } catch (Exception e) {
+            Logger.e(TAG, e);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -153,4 +175,37 @@ public class UriFileUtils {
         return null;
     }
     
+    public static String getContentName(Context context, Uri uri) {
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+            }
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
+    public static boolean saveContent(Context context, Uri uri, File file) {
+        InputStream from = null;
+        FileOutputStream to = null;
+        try {
+            from = context.getContentResolver().openInputStream(uri);
+            to = new FileOutputStream(file, false);
+            IOUtils.copyStream(from, to);
+            return true;
+        } catch (Exception e) {
+            Logger.e(TAG, e);
+        } finally {
+            IOUtils.closeQuietly(from);
+            IOUtils.closeQuietly(to);
+        }
+        return false;
+    }
 }

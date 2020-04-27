@@ -41,11 +41,21 @@ public class ApplicationSettings {
     private final boolean isTablet;
     private final boolean isSFW;
     
+    private void initHiddenPreferences() {
+        if (!preferences.contains(resources.getString(R.string.pref_key_autohide_json)))
+            preferences.edit().putString(resources.getString(R.string.pref_key_autohide_json), "[]").commit();
+        if (!preferences.contains(resources.getString(R.string.pref_key_quickaccess_json)))
+            preferences.edit().putString(resources.getString(R.string.pref_key_quickaccess_json), "[{}]").commit();
+        if (!preferences.contains(resources.getString(R.string.pref_key_chans_order_json)))
+            preferences.edit().putString(resources.getString(R.string.pref_key_chans_order_json), "[]").commit();
+    }
+
     public ApplicationSettings(SharedPreferences preferences, Resources resources) {
         this.preferences = preferences;
         this.resources = resources;
         this.isTablet = (resources.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
         this.isSFW = !R.class.getPackage().getName().endsWith(".wishmaster");
+        initHiddenPreferences();
     }
     
     public File getDefaultDownloadDir() {
@@ -67,6 +77,10 @@ public class ApplicationSettings {
         return preferences.getString(resources.getString(R.string.pref_key_email), "");
     }
     
+    public boolean isSafePosting() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_safe_posting), false);
+    }
+
     public boolean isRandomHash() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_random_hash), false);
     }
@@ -81,6 +95,12 @@ public class ApplicationSettings {
 
     public boolean scrollToActiveTab() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_scroll_to_active_tab), true);
+    }
+
+    public String getWebSearchUrl() {
+        String url = preferences.getString(resources.getString(R.string.pref_key_web_search_url), null);
+        if (url == null || url.length() == 0) return null;
+        return url;
     }
 
     public enum DownloadThumbnailsMode {
@@ -107,6 +127,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_download_lazy), true);
     }
     
+    public boolean isDownloadOriginalNames() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_download_original_names), false);
+    }
+
     public boolean isPopupLinks() {
         return true;
     }
@@ -176,6 +200,7 @@ public class ApplicationSettings {
         if (theme.equals(resources.getString(R.string.pref_theme_value_futaba))) return R.style.Theme_Futaba;
         if (theme.equals(resources.getString(R.string.pref_theme_value_photon))) return R.style.Theme_Photon;
         if (theme.equals(resources.getString(R.string.pref_theme_value_neutron))) return R.style.Theme_Neutron;
+        if (theme.equals(resources.getString(R.string.pref_theme_value_burichan))) return R.style.Theme_Burichan;
         if (theme.equals(resources.getString(R.string.pref_theme_value_gurochan))) return R.style.Theme_Gurochan;
         if (theme.equals(resources.getString(R.string.pref_theme_value_tomorrow))) return R.style.Theme_Tomorrow;
         if (theme.equals(resources.getString(R.string.pref_theme_value_mikuba))) return R.style.Theme_Mikuba;
@@ -186,9 +211,12 @@ public class ApplicationSettings {
     private int getFontSizeStyle() {
         String defaultFontSizeValue = resources.getString(R.string.pref_font_size_value_default);
         String fontSize = preferences.getString(resources.getString(R.string.pref_key_font_size), defaultFontSizeValue);
+        if (fontSize.equals(resources.getString(R.string.pref_font_size_value_micro))) return R.style.FontSize_Micro;
+        if (fontSize.equals(resources.getString(R.string.pref_font_size_value_very_small))) return R.style.FontSize_VerySmall;
         if (fontSize.equals(resources.getString(R.string.pref_font_size_value_small))) return R.style.FontSize_Small;
         if (fontSize.equals(resources.getString(R.string.pref_font_size_value_medium))) return R.style.FontSize_Medium;
         if (fontSize.equals(resources.getString(R.string.pref_font_size_value_large))) return R.style.FontSize_Large;
+        if (fontSize.equals(resources.getString(R.string.pref_font_size_value_very_large))) return R.style.FontSize_VeryLarge;
         if (fontSize.equals(resources.getString(R.string.pref_font_size_value_huge))) return R.style.FontSize_Huge;
         return R.style.FontSize_Small;
     }
@@ -206,6 +234,14 @@ public class ApplicationSettings {
         }
     }
     
+    public boolean isUpdateOnStartup() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_update_on_startup), false);
+    }
+
+    public boolean isUpdateAllowBeta() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_update_allow_beta), false);
+    }
+
     public boolean isRealTablet() {
         return isTablet;
     }
@@ -314,6 +350,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_swipe_to_close), true);
     }
     
+    public boolean autoplayMedia() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_autoplay), false);
+    }
+
     public boolean scrollThreadFromGallery() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_scroll_thread), false);
     }
@@ -334,8 +374,12 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_gallery_videoplayer), true);
     }
     
+    public boolean useWebViewVideoPlayer() {
+        return useInternalVideoPlayer() && preferences.getBoolean(resources.getString(R.string.pref_key_gallery_webview_videoplayer), false);
+    }
+
     public boolean doNotDownloadVideos() {
-        return !useInternalVideoPlayer() && preferences.getBoolean(resources.getString(R.string.pref_key_do_not_download_videos), false);
+        return preferences.getBoolean(resources.getString(R.string.pref_key_do_not_download_videos), false);
     }
     
     public boolean useInternalAudioPlayer() {
@@ -410,6 +454,10 @@ public class ApplicationSettings {
         preferences.edit().putBoolean(resources.getString(R.string.pref_key_enable_autoupdate), value).commit();
     }
     
+    public boolean isAutoupdateStopOnExit() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_stop_on_exit), false);
+    }
+
     public boolean isAutoupdateWifiOnly() {
         return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_only_wifi), false);
     }
@@ -422,6 +470,10 @@ public class ApplicationSettings {
         return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_notification), false);
     }
     
+    public boolean isAutoupdateProgress() {
+        return preferences.getBoolean(resources.getString(R.string.pref_key_autoupdate_progress), false);
+    }
+
     public int getAutoupdateDelay() {
         int defaultValue = 60;
         String autoupdateDelayStr = preferences.getString(resources.getString(R.string.pref_key_autoupdate_delay), null);
@@ -471,6 +523,7 @@ public class ApplicationSettings {
         public boolean isDisplayDate;
         public boolean isLocalTime;
         public boolean repliesOnlyQuantity;
+        public boolean showDefaultNames;
         public boolean showHiddenItems;
         public boolean maskPictures;
         public boolean hideActionBar;
@@ -483,6 +536,7 @@ public class ApplicationSettings {
         container.isDisplayDate = isDisplayDate();
         container.isLocalTime = isLocalTime();
         container.repliesOnlyQuantity = repliesOnlyQuantity();
+        container.showDefaultNames = showDefaultNames();
         container.showHiddenItems = showHiddenItems();
         container.maskPictures = maskPictures();
         container.hideActionBar = hideActionBar();
@@ -536,10 +590,21 @@ public class ApplicationSettings {
         String defaultThumbnailScale = resources.getString(R.string.pref_post_thumbnail_scale_value_default);
         String thumbnailScale = preferences.getString(resources.getString(R.string.pref_key_post_thumbnail_scale), defaultThumbnailScale);
         if (thumbnailScale.equals(resources.getString(R.string.pref_post_thumbnail_scale_value_50percent)))  scale = 0.5;
+        if (thumbnailScale.equals(resources.getString(R.string.pref_post_thumbnail_scale_value_75percent)))  scale = 0.75;
         if (thumbnailScale.equals(resources.getString(R.string.pref_post_thumbnail_scale_value_100percent))) scale = 1.0;
+        if (thumbnailScale.equals(resources.getString(R.string.pref_post_thumbnail_scale_value_125percent))) scale = 1.25;
         if (thumbnailScale.equals(resources.getString(R.string.pref_post_thumbnail_scale_value_150percent))) scale = 1.5;
+        if (thumbnailScale.equals(resources.getString(R.string.pref_post_thumbnail_scale_value_175percent))) scale = 1.75;
         if (thumbnailScale.equals(resources.getString(R.string.pref_post_thumbnail_scale_value_200percent))) scale = 2.0;
         int result = (int) (resources.getDimensionPixelSize(R.dimen.post_thumbnail_size) * scale);
         return result;
     }    
+
+    public boolean showDefaultNames(){
+        return preferences.getBoolean(resources.getString(R.string.pref_key_show_default_names), false);
+    }
+
+    public boolean widePopupDialogs(){
+        return preferences.getBoolean(resources.getString(R.string.pref_key_wide_popup_dialogs), false);
+    }
 }

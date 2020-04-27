@@ -64,8 +64,8 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
 public class DvachnetModule extends AbstractWakabaModule {
     
     static final String CHAN_NAME = "dva-ch.net";
-    private static final String DEFAULT_DOMAIN = "dva-ch.com";
-    private static final String DOMAINS_HINT = "dva-ch.com, 2ch.rip";
+    private static final String DEFAULT_DOMAIN = "dva-ch.net";
+    private static final String DOMAINS_HINT = "dva-ch.net, 2ch.rip";
     private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "2ch.rip" };
     private static final SimpleBoardModel[] BOARDS = new SimpleBoardModel[] {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Бред", "Обсуждения", true),
@@ -141,7 +141,7 @@ public class DvachnetModule extends AbstractWakabaModule {
     
     @Override
     public String getDisplayingName() {
-        return "Два.ч (dva-ch.com)";
+        return "Два.ч (dva-ch.net)";
     }
     
     @Override

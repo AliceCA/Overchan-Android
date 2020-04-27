@@ -27,6 +27,7 @@ import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
 import nya.miku.wishmaster.api.util.ChanModels;
+import nya.miku.wishmaster.cache.FileCache;
 import nya.miku.wishmaster.cache.SerializablePage;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.common.MainApplication;
@@ -156,6 +157,19 @@ public class ShareActivity extends ListActivity {
             Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
             if (uri != null) {
                 File file = UriFileUtils.getFile(this, uri);
+                if (file == null && "content".equalsIgnoreCase(uri.getScheme())) {
+                    String name = UriFileUtils.getContentName(this, uri);
+                    if (name != null && !name.equals("")) {
+                        FileCache fileCache = MainApplication.getInstance().fileCache;
+                        file = fileCache.create(fileCache.PREFIX_ATTACHMENTS + name);
+                        if (UriFileUtils.saveContent(this, uri, file)) {
+                            fileCache.put(file);
+                        } else {
+                            fileCache.abort(file);
+                            file = null;
+                        }
+                    }
+                }
                 if (file != null) {
                     selectedFile = file;
                 }

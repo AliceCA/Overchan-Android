@@ -76,13 +76,12 @@ public class MainApplication extends Application {
     
     private static final String[] MODULES = new String[] {
             "nya.miku.wishmaster.chans.fourchan.FourchanModule",
-            "nya.miku.wishmaster.chans.krautchan.KrautModule",
+            "nya.miku.wishmaster.chans.kohlchan.KohlchanModule",
             "nya.miku.wishmaster.chans.infinity.InfinityModule",
             "nya.miku.wishmaster.chans.cirno.CirnoModule",
             "nya.miku.wishmaster.chans.cirno.MikubaModule",
             "nya.miku.wishmaster.chans.dobrochan.DobroModule",
             "nya.miku.wishmaster.chans.sevenchan.SevenchanModule",
-            "nya.miku.wishmaster.chans.infinity.InfinityPlModule",
             "nya.miku.wishmaster.chans.cirno.NowereModule",
             "nya.miku.wishmaster.chans.cirno.Chan410Module",
             "nya.miku.wishmaster.chans.chan420.Chan420Module",
@@ -90,19 +89,12 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.horochan.HorochanModule",
             "nya.miku.wishmaster.chans.allchan.AllchanModule",
             "nya.miku.wishmaster.chans.ponyach.PonyachModule",
-            "nya.miku.wishmaster.chans.uchan.UchanModule",
-            "nya.miku.wishmaster.chans.nullchan.NullchanclubModule",
-            "nya.miku.wishmaster.chans.nullchan.NullchaneuModule",
-            "nya.miku.wishmaster.chans.nullchan.Null_chanModule",
             "nya.miku.wishmaster.chans.dvachnet.DvachnetModule",
             "nya.miku.wishmaster.chans.mentachsu.MentachsuModule",
             "nya.miku.wishmaster.chans.synch.SynchModule",
-            "nya.miku.wishmaster.chans.inach.InachModule",
             "nya.miku.wishmaster.chans.kurisach.KurisachModule",
-            "nya.miku.wishmaster.chans.vichan.VichanModule",
             "nya.miku.wishmaster.chans.lainchan.LainModule",
             "nya.miku.wishmaster.chans.tohnochan.TohnoChanModule",
-            "nya.miku.wishmaster.chans.chan76.Chan76Module",
             "nya.miku.wishmaster.chans.dfwk.DFWKModule",
             "nya.miku.wishmaster.chans.newnullchan.NewNullchanModule",
             "nya.miku.wishmaster.chans.anonfm.AnonFmModule",
@@ -111,20 +103,17 @@ public class MainApplication extends Application {
             "nya.miku.wishmaster.chans.samachan.SamachanModule",
             "nya.miku.wishmaster.chans.tumbach.TumbachModule",
             "nya.miku.wishmaster.chans.wizchan.WizchanModule",
-            "nya.miku.wishmaster.chans.brchan.BrchanModule",
             "nya.miku.wishmaster.chans.infinity.LolifoxModule",
             "nya.miku.wishmaster.chans.lampach.LampachModule",
             "nya.miku.wishmaster.chans.kropyvach.KropyvachModule",
-            "nya.miku.wishmaster.chans.mentachnet.MentachnetModule",
             "nya.miku.wishmaster.chans.hispachan.HispachanModule",
             "nya.miku.wishmaster.chans.ernstchan.ErnstModule",
-            "nya.miku.wishmaster.chans.nullchan.NullchanoneModule",
             "nya.miku.wishmaster.chans.depreschan.DepresModule",
             "nya.miku.wishmaster.chans.endchan.EndChanModule",
             "nya.miku.wishmaster.chans.diochan.DiochanModule",
             "nya.miku.wishmaster.chans.tirech.TirechModule",
             "nya.miku.wishmaster.chans.tbpchan.TBPchanModule",
-            "nya.miku.wishmaster.chans.mewchnet.MewchnetModule",
+            "nya.miku.wishmaster.chans.kakashinenpo.KakashiNenpoModule",
     };
     
     private static MainApplication instance;
@@ -270,8 +259,7 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        processName = getProcessName();
-        if (ACRAConstants.ACRA_ENABLED) ACRA.init(this);
+        ACRA.init(this);
         if (isGalleryProcess()) return;
         initObjects();
         instance = this;
@@ -309,7 +297,7 @@ public class MainApplication extends Application {
     
     @Override
     public void onTrimMemory(int level) {
-
+        super.onTrimMemory(level);
         // Determine which lifecycle or system event was raised.
         switch (level) {
             case ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW:

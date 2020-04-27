@@ -274,67 +274,83 @@ public class TabsTrackerService extends Service {
             TabModel[] tabsArray = new TabModel[tabsArrayLength]; //avoid of java.util.ConcurrentModificationException
             for (int i=0; i<tabsArrayLength; ++i) tabsArray[i] = tabsState.tabsArray.get(i);
             for (final TabModel tab : tabsArray) {
+                tab.autoupdateComplete = false;
+            }
+            for (final TabModel tab : tabsArray) {
                 if (task.isCancelled()) return;
                 if (settings.isAutoupdateWifiOnly() && !Wifi.isConnected() && !immediately) return;
-                if (tab.type == TabModel.TYPE_NORMAL && tab.pageModel.type == UrlPageModel.TYPE_THREADPAGE && tab.autoupdateBackground) {
-                    if (tabsSwitcher.currentId != null && tabsSwitcher.currentId.equals(tab.id)) continue;
-                    final String hash = tab.hash;
-                    ChanModule chan = MainApplication.getInstance().getChanModule(tab.pageModel.chanName);
-                    currentUpdatingTabId = tab.id;
-                    final PresentationModel presentationModel = pagesCache.getPresentationModel(hash);
-                    final SerializablePage serializablePage;
-                    if (presentationModel != null) {
-                        serializablePage = presentationModel.source;
-                    } else {
-                        SerializablePage pageFromFilecache = pagesCache.getSerializablePage(hash);
-                        if (pageFromFilecache != null) {
-                            serializablePage = pageFromFilecache;
-                        } else {
-                            serializablePage = new SerializablePage();
-                            serializablePage.pageModel = tab.pageModel;
-                        }
-                    }
-                    
-                    final int oldCount = serializablePage.posts != null ? serializablePage.posts.length : 0;
-                    new PageLoaderFromChan(serializablePage, new PageLoaderFromChan.PageLoaderCallback() {
-                        @Override
-                        public void onSuccess() {
-                            BackgroundThumbDownloader.download(serializablePage, task);
-                            MainApplication.getInstance().subscriptions.checkOwnPost(serializablePage, oldCount);
-                            tab.autoupdateError = false;
-                            int newCount = serializablePage.posts != null ? serializablePage.posts.length : 0;
-                            if (oldCount != newCount) {
-                                if (oldCount != 0) tab.unreadPostsCount += (newCount - oldCount);
-                                setUnread();
-                                int checkSubscriptions = MainApplication.getInstance().subscriptions.checkSubscriptions(serializablePage, oldCount);
-                                if (checkSubscriptions >= 0) {
-                                    addSubscriptionNotification(tab.webUrl, serializablePage.posts[checkSubscriptions].number, tab.title);
-                                    tab.unreadSubscriptions = true;
+                currentUpdatingTabId = tab.id;
+                sendBroadcast(new Intent(BROADCAST_ACTION_NOTIFY));
+                if ((tab.type == TabModel.TYPE_NORMAL) &&
+                    (tab.pageModel.type == UrlPageModel.TYPE_THREADPAGE) &&
+                    (tab.autoupdateBackground == true)) {
+                    if ((tabsSwitcher.currentId != null && tabsSwitcher.currentId.equals(tab.id)) &&
+                        (tabsSwitcher.currentFragment instanceof BoardFragment)) {
+                        Async.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    ((BoardFragment) tabsSwitcher.currentFragment).updateSilent();
+                                } catch (Exception e) {
+                                    Logger.e(TAG, e);
                                 }
                             }
-                            if (presentationModel != null) {
-                                presentationModel.setNotReady();
-                                pagesCache.putPresentationModel(hash, presentationModel);
+                        });
+                    } else {
+                        final String hash = tab.hash;
+                        ChanModule chan = MainApplication.getInstance().getChanModule(tab.pageModel.chanName);
+                        final PresentationModel presentationModel = pagesCache.getPresentationModel(hash);
+                        final SerializablePage serializablePage;
+                        if (presentationModel != null) {
+                            serializablePage = presentationModel.source;
+                        } else {
+                            SerializablePage pageFromFilecache = pagesCache.getSerializablePage(hash);
+                            if (pageFromFilecache != null) {
+                                serializablePage = pageFromFilecache;
                             } else {
-                                pagesCache.putSerializablePage(hash, serializablePage);
+                                serializablePage = new SerializablePage();
+                                serializablePage.pageModel = tab.pageModel;
                             }
                         }
-                        @Override
-                        public void onInteractiveException(InteractiveException e) {
-                            tab.autoupdateError = true;
-                        }
-                        @Override
-                        public void onError(String message) {
-                            tab.autoupdateError = true;
-                        }
-                    }, chan, task).run();
+                        final int oldCount = serializablePage.posts != null ? serializablePage.posts.length : 0;
+                        new PageLoaderFromChan(serializablePage, new PageLoaderFromChan.PageLoaderCallback() {
+                            @Override
+                            public void onSuccess() {
+                                BackgroundThumbDownloader.download(serializablePage, task);
+                                MainApplication.getInstance().subscriptions.checkOwnPost(serializablePage, oldCount);
+                                tab.autoupdateError = false;
+                                int newCount = serializablePage.posts != null ? serializablePage.posts.length : 0;
+                                if (oldCount != newCount) {
+                                    if (oldCount != 0) tab.unreadPostsCount += (newCount - oldCount);
+                                    setUnread();
+                                    int checkSubscriptions = MainApplication.getInstance().subscriptions.checkSubscriptions(serializablePage, oldCount);
+                                    if (checkSubscriptions >= 0) {
+                                        addSubscriptionNotification(tab.webUrl, serializablePage.posts[checkSubscriptions].number, tab.title);
+                                        tab.unreadSubscriptions = true;
+                                    }
+                                }
+                                if (presentationModel != null) {
+                                    presentationModel.setNotReady();
+                                    pagesCache.putPresentationModel(hash, presentationModel);
+                                } else {
+                                    pagesCache.putSerializablePage(hash, serializablePage);
+                                }
+                            }
+                            @Override
+                            public void onInteractiveException(InteractiveException e) {
+                                tab.autoupdateError = true;
+                            }
+                            @Override
+                            public void onError(String message) {
+                                tab.autoupdateError = true;
+                            }
+                        }, chan, task).run();
+                    }
                 }
+                tab.autoupdateComplete = true;
             }
-            currentUpdatingTabId = -1;
-        }
-        if (task.isCancelled()) return;
-        if (settings.isAutoupdateWifiOnly() && !Wifi.isConnected() && !immediately) return;
-        if (tabsSwitcher.currentFragment instanceof BoardFragment) {
+            sendBroadcast(new Intent(BROADCAST_ACTION_NOTIFY));
+        } else if (tabsSwitcher.currentFragment instanceof BoardFragment) {
             TabModel tab = tabsState.findTabById(tabsSwitcher.currentId);
             if (tab != null && tab.pageModel != null && tab.type == TabModel.TYPE_NORMAL && tab.pageModel.type == UrlPageModel.TYPE_THREADPAGE) {
                 Async.runOnUiThread(new Runnable() {
@@ -349,6 +365,7 @@ public class TabsTrackerService extends Service {
                 });
             }
         }
+        LockSupport.parkNanos(1000000000);
     }
     
     private class TrackerLoop extends BaseCancellableTask implements Runnable {
@@ -372,6 +389,7 @@ public class TabsTrackerService extends Service {
                     }
                     if (!settings.isAutoupdateWifiOnly() || Wifi.isConnected() || immediately) {
                         doUpdate(this);
+                        currentUpdatingTabId = -1;
                         immediately = false;
                     }
                     
@@ -451,6 +469,7 @@ public class TabsTrackerService extends Service {
         Logger.d(TAG, "TabsTrackerService destroying");
         if (task != null) task.cancel();
         running = false;
+        currentUpdatingTabId = -1;
         unregisterReceiver(broadcastReceiver);
     }
     

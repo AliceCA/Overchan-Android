@@ -54,18 +54,17 @@ public class TohnoChanModule extends AbstractKusabaModule {
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "vg", "Video Games", "Media/Entertainment", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "foe", "Touhou", "Media/Entertainment", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "mp3", "Music", "Media/Entertainment", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "vn", "Visual Novels", "Media/Entertainment", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "kf", "Kemono Friends", "Media/Entertainment", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "fig", "Collectibles", "Hobbies/Interests", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "navi", "Science & technology", "Hobbies/Interests", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "cr", "Creativity", "Hobbies/Interests", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "so", "Ronery", "Broad discussion", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "mai", "Waifu", "Broad discussion", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ot", "Otaku Tangents", "Broad discussion", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "日本", "日本語", "Broad discussion", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "mt", "Academia", "Broad discussion", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "so", "Ronery", "General discussion", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "mai", "Waifu", "General discussion", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ot", "Otaku Tangents", "Broad General discussion", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ns", "Hentai", "Other", false),
-            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "fb", "Feedback", "Other", false),
             ChanModels.obtainSimpleBoardModel(CHAN_NAME, "pic", "Dump", "Other", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "lol", "Funposting", "Other", false),
+            ChanModels.obtainSimpleBoardModel(CHAN_NAME, "tat", "Debates", "Other", false),
     };
     
     public TohnoChanModule(SharedPreferences preferences, Resources resources) {
@@ -90,6 +89,11 @@ public class TohnoChanModule extends AbstractKusabaModule {
     @Override
     protected String getUsingDomain() {
         return CHAN_DOMAIN;
+    }
+
+    @Override
+    protected boolean canCloudflare() {
+        return true;
     }
     
     @Override
@@ -136,10 +140,10 @@ public class TohnoChanModule extends AbstractKusabaModule {
                 addString("board", model.boardName).
                 addString("replythread", model.threadNumber == null ? "0" : model.threadNumber).
                 addString("editpost", "0").
-                addString("name", model.name).
-                addString("em", model.sage ? "sage" : ((model.email != null && model.email.length() > 0) ? model.email : "noko" )).
-                addString("subj", model.subject).
-                addString("message", model.comment).
+                addString("fifseyRid", model.name).
+                addString("keeciatt", model.sage ? "sage" : ((model.email != null && model.email.length() > 0) ? model.email : "noko" )).
+                addString("fochBiag", model.subject).
+                addString("jenmicayn", model.comment).
                 addString("postpassword", model.password);
         setSendPostEntityAttachments(model, postEntityBuilder);
     }

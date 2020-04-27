@@ -33,11 +33,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:visibility="visible" />
     
     <ImageView
+        android:id="@+id/tab_state_indicator"
+        android:layout_gravity="center_vertical"
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp"
+        android:contentDescription="@string/empty" />
+
+    <ImageView
         android:id="@+id/tab_favicon"
         android:layout_gravity="center_vertical"
         android:layout_width="40dp"
         android:layout_height="match_parent"
-        android:paddingLeft="4dp"
+        android:paddingLeft="1dp"
         android:paddingRight="4dp"
         android:contentDescription="@string/empty" />
  
@@ -48,7 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textColor="?attr/sidebarForeground"
         android:singleLine="true" />
     
     <nya.miku.wishmaster.lib.NonParentFocusableImageView

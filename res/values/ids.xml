@@ -21,7 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="menu_open_close_drawer" type="id"/>
     <item name="menu_open_browser" type="id"/>
     <item name="menu_favorites" type="id"/>
+    <item name="menu_reload_thread" type="id"/>
     <item name="menu_settings" type="id"/>
+    <item name="menu_autohide" type="id"/>
     <item name="menu_sub_settings" type="id"/>
     <item name="menu_sub_settings_suspend" type="id"/>
     <item name="menu_sub_settings_autoupdate" type="id"/>
@@ -55,11 +57,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="context_menu_autoupdate_now" type="id"/>
     <item name="context_menu_open_in_new_tab" type="id"/>
     <item name="context_menu_thread_preview" type="id"/>
+    <item name="context_menu_goto_post" type="id"/>
     <item name="context_menu_reply" type="id"/>
     <item name="context_menu_reply_with_quote" type="id"/>
     <item name="context_menu_reply_no_reading" type="id"/>
-    <item name="context_menu_select_text" type="id"/>
-    <item name="context_menu_share" type="id"/>
+    <item name="context_menu_copy_and_share" type="id"/>
+    <item name="context_menu_copy_post_url" type="id"/>
+    <item name="context_menu_copy_post_text" type="id"/>
+    <item name="context_menu_share_post_link" type="id"/>
+    <item name="context_menu_share_post_text" type="id"/>
     <item name="context_menu_share_link" type="id"/>
     <item name="context_menu_hide" type="id"/>
     <item name="context_menu_delete_submenu" type="id"/>
@@ -76,6 +82,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="context_menu_thumb_load_thumb" type="id"/>
     <item name="context_menu_thumb_download" type="id"/>
     <item name="context_menu_thumb_copy_url" type="id"/>
+    <item name="context_menu_thumb_share_link" type="id"/>
     <item name="context_menu_thumb_attachment_info" type="id"/>
     <item name="context_menu_thumb_reverse_search" type="id"/>
     

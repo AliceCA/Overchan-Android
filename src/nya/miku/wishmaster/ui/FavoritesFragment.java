@@ -172,9 +172,10 @@ public class FavoritesFragment extends Fragment implements AdapterView.OnItemCli
         List<Database.FavoritesEntry> boards = new ArrayList<Database.FavoritesEntry>();
         List<Database.FavoritesEntry> threads = new ArrayList<Database.FavoritesEntry>();
         for (Database.FavoritesEntry entry : favorites) {
-            if (Database.isNull(entry.board)) chans.add(entry);
-            else if (Database.isNull(entry.thread)) boards.add(entry);
-            else threads.add(entry);
+            if (!Database.isNull(entry.thread)) threads.add(entry);
+            else if (!Database.isNull(entry.board)) boards.add(entry);
+            else if (!Database.isNull(entry.boardPage)) boards.add(entry);
+            else chans.add(entry);
         }
         int listsCount = (chans.isEmpty() ? 0 : 1) + (boards.isEmpty() ? 0 : 1) + (threads.isEmpty() ? 0 : 1);
         if (listsCount > 1) listViews.add(Pair.of(getListView(favorites), resources.getString(R.string.favorites_all)));

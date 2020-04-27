@@ -18,13 +18,17 @@
 
 package nya.miku.wishmaster.chans.newnullchan;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.preference.EditTextPreference;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputType;
+import android.text.TextUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -39,6 +43,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpHeaders;
+import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
+import cz.msebera.android.httpclient.message.BasicHeader;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.CloudflareChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -67,13 +74,15 @@ import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class NewNullchanModule extends CloudflareChanModule {
 
-    static final String CHAN_NAME = "0chan.hk";
-    private static final String CHAN_DOMAIN = "0chan.hk";
-    private static final String[] DOMAINS = new String[] { CHAN_DOMAIN };
+    static final String CHAN_NAME = "0chan.pl";
+    private static final String DEFAULT_DOMAIN = "www.0chan.pl";
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, "0chan.pl" };
 
     private static final Pattern BOARD_PATTERN = Pattern.compile("(\\w+)");
     private static final Pattern THREADPAGE_PATTERN = Pattern.compile("(\\w+)/(\\d+)(?:#(\\d+))?");
     private static final String CAPTCHA_BASE64_PREFIX = "data:image/png;base64,";
+    private static final String DISCLAIMER_COOKIE_NAME = "disclaimer";
+    private static final String PREF_KEY_DOMAIN = "domain";
     
     private static String sessionId = null;
     private static HashMap<String, String> captchas = null;
@@ -135,7 +144,7 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     @Override
     public String getDisplayingName() {
-        return "Øчан (0chan.hk)";
+        return "Øчан (0chan.pl)";
     }
 
     @Override
@@ -143,8 +152,21 @@ public class NewNullchanModule extends CloudflareChanModule {
         return ResourcesCompat.getDrawable(resources, R.drawable.favicon_0chan, null);
     }
 
+    private void addDomainPreference(PreferenceGroup group) {
+        Context context = group.getContext();
+        EditTextPreference domainPref = new EditTextPreference(context);
+        domainPref.setTitle(R.string.pref_domain);
+        domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        group.addPreference(domainPref);
+    }
+
     @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
+        addDomainPreference(preferenceGroup);
         addHttpsPreference(preferenceGroup, true);
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
@@ -154,8 +176,31 @@ public class NewNullchanModule extends CloudflareChanModule {
         return useHttps(true);
     }
 
+    @Override
+    protected void initHttpClient() {
+        super.initHttpClient();
+        setDisclaimerCookie();
+    }
+
+    private void setDisclaimerCookie() {
+        BasicClientCookie c = new BasicClientCookie(DISCLAIMER_COOKIE_NAME, "1");
+        c.setDomain(getUsingDomain());
+        c.setPath("/");
+        httpClient.getCookieStore().addCookie(c);
+    }
+
     private String getUsingDomain() {
-        return CHAN_DOMAIN;
+        String domain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), DEFAULT_DOMAIN);
+        return TextUtils.isEmpty(domain) ? DEFAULT_DOMAIN : domain;
+    }
+
+    private String[] getAllDomains() {
+        String domain = getUsingDomain();
+        for (String d : DOMAINS) if (domain.equals(d)) return DOMAINS;
+        String[] domains = new String[DOMAINS.length + 1];
+        for (int i=0; i<DOMAINS.length; ++i) domains[i] = DOMAINS[i];
+        domains[DOMAINS.length] = domain;
+        return domains;
     }
 
     private String getUsingUrl() {
@@ -309,7 +354,12 @@ public class NewNullchanModule extends CloudflareChanModule {
         JSONObject result = new JSONObject(response);
         if (!result.optBoolean("ok", false)) {
             String errorMessage = result.optString("reason");
-            if (errorMessage.length() > 0) throw new Exception(errorMessage);
+            if (errorMessage.length() > 0) {
+                if (errorMessage.startsWith("error: ")) {
+                    errorMessage = errorMessage.substring(7);
+                }
+                throw new Exception(errorMessage);
+            }
             throw new Exception(result.toString());
         }
         String token = result.getJSONObject("attachment").getString("token");
@@ -363,6 +413,18 @@ public class NewNullchanModule extends CloudflareChanModule {
         String parent = null;
         String comment = model.comment;
 
+        UrlPageModel urlModel = new UrlPageModel();
+        urlModel.chanName = getChanName();
+        urlModel.boardName = model.boardName;
+        if (model.threadNumber == null) {
+            urlModel.type = UrlPageModel.TYPE_BOARDPAGE;
+            urlModel.boardPage = UrlPageModel.DEFAULT_FIRST_PAGE;
+        } else {
+            urlModel.type = UrlPageModel.TYPE_THREADPAGE;
+            urlModel.threadNumber = model.threadNumber;
+        }
+        String referer = buildUrl(urlModel);
+        
         if (model.threadNumber != null) {
             Pattern referencePattern = Pattern.compile("^\\s*>>(\\d+)");
             Matcher matcher = referencePattern.matcher(comment);
@@ -382,18 +444,18 @@ public class NewNullchanModule extends CloudflareChanModule {
             url = getUsingUrl() + "api/thread/create?board=" + model.boardName + "&session=" + sessionId;
         }
         JSONObject jsonPayload = new JSONObject();
-        jsonPayload.put("board", model.boardName);
-        jsonPayload.put("thread", model.threadNumber != null ? model.threadNumber : JSONObject.NULL);
-        jsonPayload.put("parent", parent != null ? parent : JSONObject.NULL);
+        jsonPayload.put("board", JSONObject.NULL);
+        jsonPayload.put("thread", JSONObject.NULL);
+        jsonPayload.put("parent", JSONObject.NULL);
+        jsonPayload.put("sage", model.sage);
         jsonPayload.put("message", comment);
-        
+        JSONArray images = new JSONArray();
         if (model.attachments != null && model.attachments.length > 0) {
-            JSONArray images = new JSONArray();
             for (int i=0; i<model.attachments.length; ++i) {
                 images.put(uploadFile(model.attachments[i], listener, task));
             }
-            jsonPayload.put("images", images);
         }
+        jsonPayload.put("images", images);
         
         String captchaId = null;
         try {
@@ -403,7 +465,8 @@ public class NewNullchanModule extends CloudflareChanModule {
         captchaId = validateCaptcha(captchaId, listener, task);
         jsonPayload.put("captcha", captchaId != null ? captchaId : JSONObject.NULL);
         JSONEntry payload = new JSONEntry(jsonPayload);
-        HttpRequestModel request = HttpRequestModel.builder().setPOST(payload).setNoRedirect(true).build();
+        Header[] customHeaders = new Header[] { new BasicHeader(HttpHeaders.REFERER, referer) };
+        HttpRequestModel request = HttpRequestModel.builder().setPOST(payload).setCustomHeaders(customHeaders).setNoRedirect(true).build();
         String response = null;
         JSONObject result = null;
         try {
@@ -435,7 +498,7 @@ public class NewNullchanModule extends CloudflareChanModule {
             throw new Exception(response);
         }
         JSONObject post = result.getJSONObject("post");
-        UrlPageModel urlModel = new UrlPageModel();
+        urlModel = new UrlPageModel();
         urlModel.type = UrlPageModel.TYPE_THREADPAGE;
         urlModel.boardName = post.optString("boardDir", model.boardName);
         urlModel.chanName = getChanName();
@@ -497,7 +560,7 @@ public class NewNullchanModule extends CloudflareChanModule {
 
     @Override
     public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
-        String path = UrlPathUtils.getUrlPath(url, DOMAINS);
+        String path = UrlPathUtils.getUrlPath(url, getAllDomains());
         if (path == null) throw new IllegalArgumentException("wrong domain");
         path = path.toLowerCase(Locale.US);
 

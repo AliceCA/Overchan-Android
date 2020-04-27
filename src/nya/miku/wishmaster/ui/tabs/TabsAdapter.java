@@ -21,11 +21,13 @@ package nya.miku.wishmaster.ui.tabs;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.ChanModule;
 import nya.miku.wishmaster.common.MainApplication;
+import nya.miku.wishmaster.ui.CompatibilityUtils;
 import nya.miku.wishmaster.ui.HistoryFragment;
 import nya.miku.wishmaster.ui.theme.ThemeUtils;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.TypedValue;
@@ -141,6 +143,21 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
     }
     
     /**
+     * @return Возвращает, если возможно, позицию последней выбранной обычной вкладки (position >= 0)
+     */
+    public int getSelectedTab() {
+        final long id;
+        if (selectedItem < 0 && (id = tabsIdStack.getCurrentTab()) != -1) {
+            for (int i = 0; i < getCount(); ++i) {
+                if (getItem(i).id == id) {
+                    return i;
+                }
+            }
+        }
+        return selectedItem;
+    }
+
+    /**
      * Закрыть вкладку
      * @param position позиция вкладки в списке
      */
@@ -192,11 +209,38 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
         }
         return false;
     }
-    
+
+    private Drawable getUpdateStateDrawable(TabModel model) {
+        TypedValue typedValue;
+        if ((TabsTrackerService.getCurrentUpdatingTabId() == -1) ||
+            (!MainApplication.getInstance().settings.isAutoupdateProgress())) {
+            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), android.R.color.transparent, true);
+        } else if (model.autoupdateComplete) {
+            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), R.attr.postQuoteForeground, true);
+        } else {
+            typedValue = ThemeUtils.resolveAttribute(context.getTheme(), R.attr.urlLinkForeground, true);
+        }
+        int color;
+        if (typedValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && typedValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+            color = typedValue.data;
+        } else {
+            try {
+                color = CompatibilityUtils.getColor(context.getResources(), typedValue.resourceId);
+            } catch (Exception e) {
+                color = 0;
+            }
+        }
+        GradientDrawable shape = new GradientDrawable();
+        shape.setShape(GradientDrawable.RECTANGLE);
+        shape.setColor(color);
+        return shape;
+    }
+
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         View view = convertView == null ? inflater.inflate(R.layout.sidebar_tabitem, parent, false) : convertView;
         View dragHandler = view.findViewById(R.id.tab_drag_handle);
+        ImageView stateIndicator = (ImageView)view.findViewById(R.id.tab_state_indicator);
         ImageView favIcon = (ImageView)view.findViewById(R.id.tab_favicon);
         TextView title = (TextView)view.findViewById(R.id.tab_text_view);
         ImageView closeBtn = (ImageView)view.findViewById(R.id.tab_close_button);
@@ -258,6 +302,13 @@ public class TabsAdapter extends ArrayAdapter<TabModel> {
                     favIcon.setVisibility(View.VISIBLE);
                 } else {
                     favIcon.setVisibility(View.GONE);
+                }
+                if ((TabsTrackerService.getCurrentUpdatingTabId() == -1) ||
+                    (!MainApplication.getInstance().settings.isAutoupdateProgress())) {
+                    stateIndicator.setVisibility(View.INVISIBLE);
+                } else {
+                    stateIndicator.setImageDrawable(getUpdateStateDrawable(model));
+                    stateIndicator.setVisibility(View.VISIBLE);
                 }
                 break;
             default:

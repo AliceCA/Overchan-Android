@@ -52,7 +52,7 @@ public class TabModel implements Serializable {
     /** элемент (номер поста, имя доски) на который требуется проскроллить сразу */
     @Tag(6) public String startItemNumber;
     /** дополнительно смещение относительно элемента, на который требуется проскроллить */
-    @Tag(7) public int startItemTop = 0;
+    @Tag(7) public int startItemTop = DEFAULT_TOP;
     /** позиция первого непрочитанного сообщения */
     @Tag(8) public int firstUnreadPosition = 0;
     /** требуется ли загружать из интернета при открытии, даже если она доступна в кэше */
@@ -69,7 +69,10 @@ public class TabModel implements Serializable {
     @Tag(13) public boolean autoupdateError;
     /** true, если есть непрочитанные ответы на отвлеживаемые посты */
     @Tag(14) public boolean unreadSubscriptions;
-    
+
+    /** статус автообновления вкладки */
+    public boolean autoupdateComplete;
+
     // "Новая вкладка", "История", "Избранное" - скрытые вкладки,
     // не отображаются в панели, не имеют отдельных объектов TabModel.
     // Определяются виртуальной позицией - отрицательное число,
@@ -78,4 +81,5 @@ public class TabModel implements Serializable {
     public static final int POSITION_NEWTAB = -1;
     public static final int POSITION_FAVORITES = -2;
     public static final int POSITION_HISTORY = -3;
+    public static final int DEFAULT_TOP = Integer.MAX_VALUE;
 }

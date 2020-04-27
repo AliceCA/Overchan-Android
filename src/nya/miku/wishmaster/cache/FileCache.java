@@ -48,6 +48,7 @@ import nya.miku.wishmaster.ui.CompatibilityImpl;
 public class FileCache {
     private static final String TAG = "FileCache";
     
+    public static final String PREFIX_ATTACHMENTS = "attachments/";
     public static final String PREFIX_ORIGINALS = "orig_";
     /*package*/ static final String PREFIX_BITMAPS = "thumb_";
     
@@ -164,9 +165,18 @@ public class FileCache {
         ensureInitialized();
         database.put("_clear_cache", -1); //database will reset if app crash
         for (File f : filesOfDir(directory)) {
-            if (!isUndeletable(f)) f.delete();
+            if (!isUndeletable(f)) deleteEntry(f);
         }
         resetCache();
+    }
+
+    private void deleteEntry(File entry) {
+        if (entry.isDirectory()) {
+            for (File f : filesOfDir(entry)) {
+                deleteEntry(f);
+            }
+        }
+        entry.delete();
     }
     
     /**
@@ -185,10 +195,19 @@ public class FileCache {
     public File get(String fileName) {
         ensureInitialized();
         synchronized (this) {
-            File file = pathToFile(fileName);
+            File file;
+            String dbName;
+            String path = directory.toString();
+            if (fileName.startsWith(path)) {
+                file = new File(fileName);
+                dbName = fileName.substring(path.length() + 1);
+            } else {
+                file = pathToFile(fileName);
+                dbName = fileName;
+            }
             if (file.exists() && !file.isDirectory()) {
                 file.setLastModified(System.currentTimeMillis());
-                database.touch(fileName);
+                database.touch(dbName);
                 return file;
             }
             return null;
@@ -208,6 +227,10 @@ public class FileCache {
         synchronized (this) {
             makeDir();
             File file = pathToFile(fileName);
+            File parent = file.getParentFile();
+            if (!parent.exists() && !parent.mkdirs()) {
+                Logger.e(TAG, "Unable to create file dir " + parent.getPath());
+            }
             if (file.exists()) {
                 delete(file, false);
             }
@@ -223,9 +246,13 @@ public class FileCache {
     public void put(File file) {
         ensureInitialized();
         synchronized (this) {
+            String dbName = pathInCache(file);
+            if (dbName == null) {
+                return;
+            }
             size += file.length();
             if (isPageFile(file)) pagesSize += file.length();
-            database.put(file.getName(), file.length());
+            database.put(dbName, file.length());
             trim();
         }
     }
@@ -237,8 +264,12 @@ public class FileCache {
     public void abort(File file) {
         ensureInitialized();
         synchronized (this) {
+            String dbName = pathInCache(file);
+            if (dbName == null) {
+                return;
+            }
             file.delete();
-            database.remove(file.getName());
+            database.remove(dbName);
         }
     }
     
@@ -257,7 +288,12 @@ public class FileCache {
             size -= file.length();
             if (isPageFile(file)) pagesSize -= file.length();
             if (file.delete()) {
-                if (removeFromDB) database.remove(file.getName());
+                if (removeFromDB) {
+                    String dbName = pathInCache(file);
+                    if (dbName != null) {
+                        database.remove(dbName);
+                    }
+                }
                 return true;
             } else {
                 resetCache();
@@ -270,6 +306,18 @@ public class FileCache {
         return new File(directory, fileName);
     }
     
+    private String pathInCache(File file) {
+        return pathInCache(file.toString());
+    }
+
+    private String pathInCache(String filePath) {
+        String cachePath = directory.toString();
+        if (filePath.startsWith(cachePath)) {
+            return filePath.substring(cachePath.length() + 1);
+        }
+        return null;
+    }
+
     private void makeDir() {
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
@@ -317,22 +365,22 @@ public class FileCache {
     
     private synchronized void resetCache() {
         database.resetDB();
-        database.insertFiles(filesOfDir(directory));
+        database.insertFiles(directory);
         long[] sizeInDB = database.getSize();
         size = sizeInDB[0];
         pagesSize = sizeInDB[1];
     }
 
     private boolean isUndeletable(File file) {
-        return isUndeletable(file.getName()); 
+        return isUndeletable(pathInCache(file));
     }
     
     private static boolean isUndeletable(String filename) {
         return filename.startsWith(PREFIX_BOARDS) || filename.equals(NOMEDIA);
     }
     
-    private static boolean isPageFile(File file) {
-        return isPageFile(file.getName());
+    private boolean isPageFile(File file) {
+        return isPageFile(pathInCache(file));
     }
     
     private static boolean isPageFile(String filename) {
@@ -387,14 +435,15 @@ public class FileCache {
             }
         }
         
-        public void insertFiles(File[] files) {
+        public void insertFiles(File directory) {
             SQLiteDatabase database = dbHelper.getWritableDatabase();
             SQLiteStatement statement = database.compileStatement("INSERT INTO " + TABLE_NAME +
                     " (" + COL_FILENAME + ", " + COL_FILESIZE + ", " + COL_TIMESTAMP + ") VALUES (?, ?, ?)");
             database.beginTransaction();
+            int pathLength = directory.toString().length() + 1;
             try {
-                for (File file : files) {
-                    statement.bindString(1, file.getName());
+                for (File file : directory.listFiles()) {
+                    statement.bindString(1, file.toString().substring(pathLength));
                     statement.bindLong(2, file.length());
                     statement.bindLong(3, file.lastModified());
                     statement.executeInsert();

@@ -23,9 +23,11 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +46,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -60,7 +61,6 @@ import nya.miku.wishmaster.api.CloudflareChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
-import nya.miku.wishmaster.api.models.CaptchaModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
 import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
@@ -85,9 +85,6 @@ public class FourchanModule extends CloudflareChanModule {
     
     static final String CHAN_NAME = "4chan.org";
     
-    private static final boolean NEW_RECAPTCHA_DEFAULT = Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD_MR1;
-    
-    private static final String PREF_KEY_NEW_RECAPTCHA = "PREF_KEY_NEW_RECAPTCHA1";
     private static final String PREF_KEY_NEW_RECAPTCHA_FALLBACK = "PREF_KEY_NEW_RECAPTCHA_FALLBACK";
     private static final String PREF_KEY_PASS_TOKEN = "PREF_KEY_PASS_TOKEN";
     private static final String PREF_KEY_PASS_PIN = "PREF_KEY_PASS_PIN";
@@ -98,8 +95,7 @@ public class FourchanModule extends CloudflareChanModule {
     private boolean usingPasscode = false;
     
     private Map<String, BoardModel> boardsMap = null;
-    
-    private Recaptcha recaptcha = null;
+    private String[] iconIds = null;
     
     private Recaptcha reportRecaptcha = null;
     private String reportCaptchaAnswer = null;
@@ -293,20 +289,12 @@ public class FourchanModule extends CloudflareChanModule {
         Context context = preferenceGroup.getContext();
         addPasscodePreference(preferenceGroup);
         
-        CheckBoxPreference newRecaptchaPref = new LazyPreferences.CheckBoxPreference(context);
-        newRecaptchaPref.setTitle(R.string.fourchan_prefs_new_recaptcha);
-        newRecaptchaPref.setSummary(R.string.fourchan_prefs_new_recaptcha_summary);
-        newRecaptchaPref.setKey(getSharedKey(PREF_KEY_NEW_RECAPTCHA));
-        newRecaptchaPref.setDefaultValue(NEW_RECAPTCHA_DEFAULT);
-        preferenceGroup.addPreference(newRecaptchaPref);
-        
         final CheckBoxPreference fallbackRecaptchaPref = new LazyPreferences.CheckBoxPreference(context);
         fallbackRecaptchaPref.setTitle(R.string.fourchan_prefs_new_recaptcha_fallback);
         fallbackRecaptchaPref.setSummary(R.string.fourchan_prefs_new_recaptcha_fallback_summary);
         fallbackRecaptchaPref.setKey(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK));
-        fallbackRecaptchaPref.setDefaultValue(false);
+        fallbackRecaptchaPref.setDefaultValue(true);
         preferenceGroup.addPreference(fallbackRecaptchaPref);
-        fallbackRecaptchaPref.setDependency(getSharedKey(PREF_KEY_NEW_RECAPTCHA));
         
         addPasswordPreference(preferenceGroup);
         addHttpsPreference(preferenceGroup, true);
@@ -328,13 +316,9 @@ public class FourchanModule extends CloudflareChanModule {
         return useHttps(true);
     }
     
-    private boolean useNewRecaptcha(boolean newThread) {
-        return newThread || preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA), NEW_RECAPTCHA_DEFAULT);
-    }
-    
     private boolean newRecaptchaFallback() {
         return preferences.getBoolean(getSharedKey(PREF_KEY_USE_PROXY), false) ||
-                preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK), false);
+                preferences.getBoolean(getSharedKey(PREF_KEY_NEW_RECAPTCHA_FALLBACK), true);
     }
     
     @Override
@@ -352,8 +336,32 @@ public class FourchanModule extends CloudflareChanModule {
         if (boardsJson == null) return oldBoardsList;
         JSONArray boards = boardsJson.getJSONArray("boards");
         
+        String[] icons = null;
+        try {
+            JSONObject flagsJson = boardsJson.getJSONObject("troll_flags");
+            if (flagsJson.length() > 0) {
+                Map<String, String> flagsMap = new TreeMap<>();
+                flagsMap.put("0", "Geographic Location");
+                Iterator<String> it = flagsJson.keys();
+                while (it.hasNext()) {
+                    String key = it.next();
+                    flagsMap.put(key, flagsJson.getString(key));
+                }
+                iconIds = flagsMap.keySet().toArray(new String[flagsMap.size()]);
+                icons = flagsMap.values().toArray(new String[flagsMap.size()]);
+            }
+        } catch (Exception e) {
+            iconIds = null;    // Troll flags were disabled
+        }
+        
         for (int i=0, len=boards.length(); i<len; ++i) {
-            BoardModel model = FourchanJsonMapper.mapBoardModel(boards.getJSONObject(i));
+            JSONObject board = boards.getJSONObject(i);
+            BoardModel model = FourchanJsonMapper.mapBoardModel(board);
+            if ((icons != null) && (board.optInt("troll_flags", 0) == 1))
+            {
+                model.allowIcons = true;
+                model.iconDescriptions = icons;
+            }
             newMap.put(model.boardName, model);
             list.add(new SimpleBoardModel(model));
         }
@@ -446,28 +454,11 @@ public class FourchanModule extends CloudflareChanModule {
     }
     
     @Override
-    public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        if (usingPasscode) return null;
-        if (useNewRecaptcha(threadNumber == null)) {
-            recaptcha = null;
-            return null;
-        } else {
-            recaptcha = Recaptcha.obtain(RECAPTCHA_KEY, task, httpClient, useHttps() ? "https" : "http");
-            CaptchaModel result = new CaptchaModel();
-            result.type = CaptchaModel.TYPE_NORMAL;
-            result.bitmap = recaptcha.bitmap;
-            return result;
-        }
-    }
-    
-    @Override
     public String sendPost(SendPostModel model, ProgressListener listener, CancellableTask task) throws Exception {
         String recaptcha2 = Recaptcha2solved.pop(RECAPTCHA_KEY);
-        if (!usingPasscode) {
-            if (useNewRecaptcha(model.threadNumber == null)) {
-                if (recaptcha2 == null) throw Recaptcha2.obtain(
-                        (useHttps() ? "https://" : "http://") + "4chan.org/", RECAPTCHA_KEY, null, CHAN_NAME, newRecaptchaFallback());
-            } else if (recaptcha == null) throw new Exception("Invalid captcha");
+        if (!usingPasscode && (recaptcha2 == null)) {
+            throw Recaptcha2.obtain(
+                    (useHttps() ? "https://" : "http://") + "4chan.org/", RECAPTCHA_KEY, null, CHAN_NAME, newRecaptchaFallback());
         }
         String url = "https://sys.4chan.org/" + model.boardName + "/post";
         ExtendedMultipartBuilder postEntityBuilder = ExtendedMultipartBuilder.create().setDelegates(listener, task).
@@ -479,15 +470,13 @@ public class FourchanModule extends CloudflareChanModule {
                 addString("pwd", model.password);
         if (model.threadNumber != null) postEntityBuilder.addString("resto", model.threadNumber);
         if (!usingPasscode) {
-            if (useNewRecaptcha(model.threadNumber == null)) {
-                postEntityBuilder.addString("g-recaptcha-response", recaptcha2);
-            } else {
-                postEntityBuilder.addString("recaptcha_challenge_field", recaptcha.challenge).
-                        addString("recaptcha_response_field", model.captchaAnswer);
-            }
+            postEntityBuilder.addString("g-recaptcha-response", recaptcha2);
         }
         if (model.attachments != null && model.attachments.length != 0) postEntityBuilder.addFile("upfile", model.attachments[0]);
         if (model.custommark) postEntityBuilder.addString("spoiler", "on");
+        if (iconIds != null && model.icon > -1 && model.icon < iconIds.length) {
+            postEntityBuilder.addString("flag", iconIds[model.icon]);
+        }
         
         HttpRequestModel request = HttpRequestModel.builder().setPOST(postEntityBuilder.build()).build();
         String response;
@@ -626,7 +615,10 @@ public class FourchanModule extends CloudflareChanModule {
             return model;
         }
         
-        if (!domain.equals("4chan.org") && !domain.endsWith(".4chan.org")) throw new IllegalArgumentException("wrong chan");
+        if (!domain.equals("4chan.org") && !domain.endsWith(".4chan.org") &&
+            !domain.equals("4channel.org") && !domain.endsWith(".4channel.org")) {
+            throw new IllegalArgumentException("wrong chan");
+        }
         
         UrlPageModel model = new UrlPageModel();
         model.chanName = CHAN_NAME;
@@ -674,4 +666,9 @@ public class FourchanModule extends CloudflareChanModule {
         throw new IllegalArgumentException("fail to parse");
     }
     
+    @Override
+    public String fixRelativeUrl(String url) {
+        if (url.startsWith("//")) return (useHttps() ? "https:" : "http:") + url;
+        return super.fixRelativeUrl(url);
+    }
 }

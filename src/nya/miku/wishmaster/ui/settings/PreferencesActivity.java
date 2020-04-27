@@ -212,15 +212,6 @@ public class PreferencesActivity extends PreferenceActivity {
             }
         });
         
-        getPreferenceManager().findPreference(getString(R.string.pref_key_autohide)).setOnPreferenceClickListener(
-                new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                startActivity(new Intent(PreferencesActivity.this, AutohideActivity.class));
-                return true;
-            }
-        });
-        
         getPreferenceManager().findPreference(getString(R.string.pref_key_cache_maxsize)).setOnPreferenceChangeListener(
                 new Preference.OnPreferenceChangeListener() {
             @Override
@@ -246,7 +237,7 @@ public class PreferencesActivity extends PreferenceActivity {
                 if (newValueStr.length() == 0) return true;
                 try {
                     int intVal = Integer.parseInt(newValueStr);
-                    if (intVal < 30) throw new NumberFormatException();
+                    if (intVal < 0) throw new NumberFormatException();
                     return true;
                 } catch (NumberFormatException e) {
                     Toast.makeText(PreferencesActivity.this, R.string.pref_autoupdate_delay_incorrect, Toast.LENGTH_LONG).show();

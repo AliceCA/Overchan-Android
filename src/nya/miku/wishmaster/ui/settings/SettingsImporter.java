@@ -212,7 +212,7 @@ public class SettingsImporter {
                 updateProgress();
                 JSONArray favorites = json.getJSONArray(JSON_KEY_FAVORITES);
                 List<Database.FavoritesEntry> favorites_list = new ArrayList<Database.FavoritesEntry>();
-                for (int i = 0; i < favorites.length(); i++)
+                for (int i = favorites.length(); i-- > 0;)
                     favorites_list.add(new Database.FavoritesEntry(favorites.getJSONObject(i)));
                 database.importFavorites(favorites_list.toArray(new Database.FavoritesEntry[favorites_list.size()]), overwrite);
                 if (task.isCancelled()) throw new Exception("Interrupted");

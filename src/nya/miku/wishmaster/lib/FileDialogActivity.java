@@ -243,6 +243,10 @@ public class FileDialogActivity extends ListActivity {
             currentPath = ROOT;
             f = new File(currentPath);
             files = f.listFiles();
+            if (files == null) {
+                finish();
+                return;
+            }
         }
         myPath.setText(getText(R.string.filedialog_location) + ": " + currentPath);
 

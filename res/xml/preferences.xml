@@ -68,6 +68,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:defaultValue="@string/pref_font_size_value_default" />
         
         <EditTextPreference
+            android:defaultValue=""
             android:key="@string/pref_key_cut_posts"
             android:title="@string/pref_cut_posts_title"
             android:hint="@string/pref_cut_posts_hint"
@@ -100,6 +101,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:title="@string/pref_sidepanel_hide_title"
             android:summary="@string/pref_sidepanel_hide_summary"
             android:disableDependentsState="true" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_show_default_names"
+            android:title="@string/pref_show_default_names_title"
+            android:summary="@string/pref_show_default_names_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_wide_popup_dialogs"
+            android:title="@string/pref_wide_popup_dialogs_title"
+            android:summary="@string/pref_wide_popup_dialogs_summary" />
         
         <ListPreference
             android:key="@string/pref_key_sidepanel_width"
@@ -136,21 +149,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:key="@string/pref_key_gallery_scroll_thread"
                 android:title="@string/pref_gallery_scroll_thread_title"
                 android:summary="@string/pref_gallery_scroll_thread_summary" />
-            
+
+			<CheckBoxPreference
+                android:defaultValue="false"
+                android:key="@string/pref_key_gallery_autoplay"
+                android:title="@string/pref_gallery_autoplay_title"
+                android:summary="@string/pref_gallery_autoplay_summary" />
+
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="@string/pref_key_gallery_videoplayer"
                 android:title="@string/pref_gallery_videoplayer_title"
-                android:summary="@string/pref_gallery_videoplayer_summary"
-                android:disableDependentsState="true" />
+                android:summary="@string/pref_gallery_videoplayer_summary" />
+            
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="@string/pref_key_gallery_webview_videoplayer"
+                android:title="@string/pref_gallery_webview_videoplayer_title"
+                android:summary="@string/pref_gallery_webview_videoplayer_summary"
+                android:dependency="@string/pref_key_gallery_videoplayer" />
             
             <CheckBoxPreference
                 android:defaultValue="false"
                 android:key="@string/pref_key_do_not_download_videos"
                 android:title="@string/pref_do_not_download_videos_title"
-                android:summary="@string/pref_do_not_download_videos_summary"
-                android:dependency="@string/pref_key_gallery_videoplayer" />
-            
+                android:summary="@string/pref_do_not_download_videos_summary" />
+
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="@string/pref_key_gallery_audioplayer"
@@ -189,6 +213,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="@string/pref_key_safe_posting"
+            android:title="@string/pref_safe_posting_title"
+            android:summary="@string/pref_safe_posting_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
             android:key="@string/pref_key_random_hash"
             android:title="@string/pref_random_hash_title"
             android:summary="@string/pref_random_hash_summary" />
@@ -210,11 +240,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:key="@string/pref_key_mask_pictures"
             android:title="@string/pref_mask_pictures_title"
             android:summary="@string/pref_mask_pictures_summary" />
-        
-        <Preference
-            android:key="@string/pref_key_autohide"
-            android:title="@string/pref_autohide_title"
-            android:summary="@string/pref_autohide_summary" />
         
         <!-- <CheckBoxPreference
             android:defaultValue="false"
@@ -263,6 +288,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:key="@string/pref_key_scroll_to_active_tab"
             android:title="@string/pref_scroll_to_active_tab_title"
             android:summary="@string/pref_scroll_to_active_tab_summary" />
+
+        <EditTextPreference
+            android:defaultValue=""
+            android:key="@string/pref_key_web_search_url"
+            android:title="@string/pref_web_search_url_title"
+            android:summary="@string/pref_web_search_url_summary"
+            android:inputType="text"
+            android:singleLine="true" />
     </PreferenceCategory>
     
     <PreferenceCategory android:title="@string/pref_cat_downloads" >
@@ -295,6 +328,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:key="@string/pref_key_download_lazy"
             android:title="@string/pref_download_lazy_title"
             android:summary="@string/pref_download_lazy_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_download_original_names"
+            android:title="@string/pref_download_original_names_title"
+            android:summary="@string/pref_download_original_names_summary" />
     </PreferenceCategory>
     
     <PreferenceCategory android:title="@string/pref_cat_date_time" >
@@ -321,12 +360,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="@string/pref_key_autoupdate_stop_on_exit"
+            android:title="@string/pref_autoupdate_stop_on_exit_title"
+            android:summary="@string/pref_autoupdate_stop_on_exit_summary"
+            android:dependency="@string/pref_key_enable_autoupdate" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
             android:key="@string/pref_key_autoupdate_only_wifi"
             android:title="@string/pref_autoupdate_only_wifi_title"
             android:summary="@string/pref_autoupdate_only_wifi_summary"
             android:dependency="@string/pref_key_enable_autoupdate" />
         
         <EditTextPreference
+            android:defaultValue=""
             android:key="@string/pref_key_autoupdate_delay"
             android:title="@string/pref_autoupdate_delay_title"
             android:hint="@string/pref_autoupdate_delay_hint"
@@ -348,6 +395,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:key="@string/pref_key_autoupdate_notification"
             android:title="@string/pref_autoupdate_notification_title"
             android:summary="@string/pref_autoupdate_notification_summary"
+            android:dependency="@string/pref_key_enable_autoupdate" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_autoupdate_progress"
+            android:title="@string/pref_autoupdate_progress_title"
+            android:summary="@string/pref_autoupdate_progress_summary"
             android:dependency="@string/pref_key_enable_autoupdate" />
     </PreferenceCategory>
     
@@ -403,6 +457,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <PreferenceCategory android:title="@string/pref_cat_cache">
         <EditTextPreference
+            android:defaultValue=""
             android:key="@string/pref_key_cache_maxsize"
             android:title="@string/pref_cache_maxsize_title"
             android:hint="@string/pref_cache_maxsize_hint"
@@ -416,6 +471,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:title="@string/pref_clear_cache_title" />
     </PreferenceCategory>
     
+    <PreferenceCategory android:title="@string/pref_cat_update">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_update_on_startup"
+            android:title="@string/pref_update_on_startup_title"
+            android:summary="@string/pref_update_on_startup_summary" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_update_allow_beta"
+            android:title="@string/pref_update_allow_beta_title"
+            android:summary="@string/pref_update_allow_beta_summary" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/pref_cat_about">
         <Preference
             android:key="@string/pref_key_about_version"

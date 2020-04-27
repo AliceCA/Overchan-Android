@@ -36,8 +36,10 @@ import nya.miku.wishmaster.ui.posting.PostFormActivity;
 import nya.miku.wishmaster.ui.posting.PostingService;
 import nya.miku.wishmaster.ui.presentation.BoardFragment;
 import nya.miku.wishmaster.ui.presentation.FlowTextHelper;
+import nya.miku.wishmaster.ui.settings.AutohideActivity;
 import nya.miku.wishmaster.ui.settings.PreferencesActivity;
 import nya.miku.wishmaster.ui.settings.ApplicationSettings.StaticSettingsContainer;
+import nya.miku.wishmaster.ui.settings.AppUpdatesChecker;
 import nya.miku.wishmaster.ui.tabs.LocalHandler;
 import nya.miku.wishmaster.ui.tabs.TabModel;
 import nya.miku.wishmaster.ui.tabs.TabsAdapter;
@@ -189,6 +191,7 @@ public class MainActivity extends FragmentActivity {
                 menu.add(Menu.NONE, R.id.menu_open_browser, 202, R.string.menu_open_browser).setIcon(R.drawable.ic_menu_browser);
             }
         }
+        menu.add(Menu.NONE, R.id.menu_autohide, 203, R.string.autohide_title);
         menu.add(Menu.NONE, R.id.menu_settings, 203, R.string.menu_preferences).setIcon(android.R.drawable.ic_menu_preferences);
         Menu subMenu = menu.addSubMenu(Menu.NONE, R.id.menu_sub_settings, 203, R.string.menu_preferences).
                 setIcon(android.R.drawable.ic_menu_preferences);
@@ -247,6 +250,9 @@ public class MainActivity extends FragmentActivity {
                     handleFavorite(tabsAdapter.getItem(tabsAdapter.getSelectedItem()));
                 }
                 return true;
+            case R.id.menu_autohide:
+                startActivity(new Intent(this, AutohideActivity.class));
+                return true;
             case R.id.menu_settings:
             case R.id.menu_sub_settings_all:
                 Intent preferencesIntent = new Intent(this, PreferencesActivity.class);
@@ -303,7 +309,7 @@ public class MainActivity extends FragmentActivity {
                         backgroundAutoupdateEnabled ? R.string.context_menu_autoupdate_background : R.string.context_menu_autoupdate_background_off).
                         setCheckable(true).setChecked(model.autoupdateBackground);
             }
-            if (model.autoupdateBackground && TabsTrackerService.getCurrentUpdatingTabId() == -1) {
+            if (TabsTrackerService.getCurrentUpdatingTabId() == -1) {
                 menu.add(Menu.NONE, R.id.context_menu_autoupdate_now, 6, R.string.context_menu_autoupdate_now);
             }
         }
@@ -387,7 +393,7 @@ public class MainActivity extends FragmentActivity {
             new View[] { findViewById(R.id.sidebar_btn_newtab), findViewById(R.id.sidebar_btn_history), findViewById(R.id.sidebar_btn_favorites) };
         hiddenTabsSection = new HiddenTabsSection(sidebarButtons);
         
-        DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
+        final DragSortListView list = (DragSortListView)findViewById(R.id.sidebar_tabs_list);
         TabsState state = MainApplication.getInstance().tabsState;
         tabsAdapter = initTabsListView(list, state);
         handleUriIntent(getIntent());
@@ -428,7 +434,7 @@ public class MainActivity extends FragmentActivity {
                             break;
                     }
                 } else if (action.equals(TabsTrackerService.BROADCAST_ACTION_NOTIFY)) {
-                    tabsAdapter.notifyDataSetChanged(false);
+                    list.invalidateViews();
                     TabsTrackerService.clearUnread();
                 }
             }
@@ -440,12 +446,16 @@ public class MainActivity extends FragmentActivity {
         if (!TabsTrackerService.isRunning() && MainApplication.getInstance().settings.isAutoupdateEnabled())
             startService(new Intent(this, TabsTrackerService.class));
         
-        if (MainApplication.getInstance().settings.isSFWRelease()) NewsReader.checkNews(this);
+        // if (MainApplication.getInstance().settings.isSFWRelease()) NewsReader.checkNews(this);
+        if (MainApplication.getInstance().settings.isUpdateOnStartup()) AppUpdatesChecker.checkForUpdates(this, true);
     }
     
     @Override
     protected void onStart() {
         super.onStart();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        }
         registerReceiver(broadcastReceiver, intentFilter);
         tabsAdapter.notifyDataSetChanged(false);
         ExtendedTrustManager.bindActivity(this);
@@ -463,6 +473,8 @@ public class MainActivity extends FragmentActivity {
         super.onDestroy();
         MainApplication.getInstance().tabsSwitcher.currentId = null;
         MainApplication.getInstance().tabsSwitcher.currentFragment = null;
+        if (isFinishing() && TabsTrackerService.isRunning() && MainApplication.getInstance().settings.isAutoupdateStopOnExit())
+            stopService(new Intent(this, TabsTrackerService.class));
         isDestroyed = true;
         Logger.d(TAG, "main activity destroyed");
     }
@@ -501,6 +513,7 @@ public class MainActivity extends FragmentActivity {
         
         if (settings.isDisplayDate != newSettings.isDisplayDate ||
                 (settings.isDisplayDate && (settings.isLocalTime != newSettings.isLocalTime)) ||
+                settings.showDefaultNames != newSettings.showDefaultNames ||
                 MainApplication.getInstance().settings.getAutohideRulesJson().hashCode() != autohideRulesHash ||
                 MainApplication.getInstance().settings.openSpoilers() != openSpoilers ||
                 MainApplication.getInstance().settings.highlightSubscriptions() != highlightSubscriptions ||
@@ -748,7 +761,7 @@ public class MainActivity extends FragmentActivity {
                     }
                     TabModel model = tabsState.tabsArray.remove(from);
                     tabsState.tabsArray.add(to, model);
-                    adapter.setSelectedItem(newSelected); //serialization enabled
+                    adapter.setSelectedItem(newSelected, true, false); //serialization enabled
                 }
             }
         });
@@ -820,6 +833,7 @@ public class MainActivity extends FragmentActivity {
                 }
                 break;
             case KeyEvent.KEYCODE_BACK:
+                if (event.getRepeatCount() > 0) return true;
                 if (onBack()) return true;
                 break;
             case KeyEvent.KEYCODE_DPAD_LEFT:

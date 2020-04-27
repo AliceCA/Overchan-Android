@@ -94,9 +94,14 @@ public class FourchanJsonMapper {
         String capcode = object.optString("capcode", "none");
         if (!capcode.equals("none")) model.trip += "##"+capcode;
         String countryIcon = object.optString("country", "");
+        boolean troll = false;
+        if (countryIcon.equals("") && object.has("troll_country")) {
+            countryIcon = object.optString("troll_country", "");
+            troll = true;
+        }
         if (!countryIcon.equals("")) {
             BadgeIconModel icon = new BadgeIconModel();
-            icon.source = "s.4cdn.org/image/country/" + /*(boardName.equals("pol") ? "troll/" : "") + */countryIcon.toLowerCase(Locale.US) + ".gif";
+            icon.source = "s.4cdn.org/image/country/" + (troll ? "troll/" : "") + countryIcon.toLowerCase(Locale.US) + ".gif";
             icon.description = object.optString("country_name");
             model.icons = new BadgeIconModel[] { icon };
         }
@@ -133,7 +138,7 @@ public class FourchanJsonMapper {
             attachment.isSpoiler = object.optInt("spoiler") == 1;
             long tim = object.optLong("tim");
             if (tim != 0) {
-                attachment.thumbnail = "t.4cdn.org/" + boardName + "/" + Long.toString(tim) + "s.jpg";
+                attachment.thumbnail = "i.4cdn.org/" + boardName + "/" + Long.toString(tim) + "s.jpg";
                 attachment.path = "i.4cdn.org/" + boardName + "/" + Long.toString(tim) + ext;
                 model.attachments = new AttachmentModel[] { attachment };
             }

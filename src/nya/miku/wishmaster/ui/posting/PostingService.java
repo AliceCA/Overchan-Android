@@ -24,12 +24,14 @@ import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.UrlPageModel;
+import nya.miku.wishmaster.cache.FileCache;
 import nya.miku.wishmaster.common.Async;
 import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.common.MainApplication;
 import nya.miku.wishmaster.http.interactive.InteractiveException;
 import nya.miku.wishmaster.ui.MainActivity;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 
 import android.annotation.SuppressLint;
@@ -260,6 +262,12 @@ public class PostingService extends Service {
             }
             
             if (success && !isCancelled()) {
+                FileCache fileCache = MainApplication.getInstance().fileCache;
+                for (File attachment : sendPostModel.attachments) {
+                    if (fileCache.get(attachment.toString()) != null) {
+                        fileCache.delete(attachment);
+                    }
+                }
                 MainApplication.getInstance().draftsCache.remove(hash);
                 Intent intentSuccess = new Intent(PostingService.this, MainActivity.class);
                 if (targetUrl == null) {

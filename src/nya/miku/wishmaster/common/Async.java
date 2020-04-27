@@ -56,4 +56,9 @@ public class Async {
     public static void runOnUiThreadDelayed(Runnable task, long delayMillis) {
         UI_HANDLER.postDelayed(task, delayMillis);
     }
+
+    /** Отменить задание (Runnable), запланированное для выполнения в UI потоке. */
+    public static void runOnUiThreadCancel(Runnable task) {
+        UI_HANDLER.removeCallbacks(task);
+    }
 }

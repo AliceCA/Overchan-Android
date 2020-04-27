@@ -154,6 +154,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_attach_file">Attach file</string>
     <string name="menu_attach_gallery">Gallery</string>
     <string name="menu_save_page">Save</string>
+    <string name="menu_reload_thread">Reload</string>
     <string name="menu_board_gallery">Gallery</string>
     <string name="menu_clear_history">Clear history</string>
     <string name="menu_clear_favorites">Remove all bookmarks</string>
@@ -165,8 +166,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_open_player">Open external player</string>
     <string name="menu_quickaccess_add">Add to Quick Access</string>
     
+    <string name="context_menu_copy_and_share">Copy/Share</string>
     <string name="context_menu_move">Move</string>
-    <string name="context_menu_copy_url">Copy the link</string>
+    <string name="context_menu_copy_url">Copy link</string>
     <string name="context_menu_add_favorites">Add to favorites</string>
     <string name="context_menu_remove_favorites">Remove from favorites</string>
     <string name="context_menu_remove_history">Remove from history</string>
@@ -176,13 +178,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_autoupdate_now">Run auto-update</string>
     <string name="context_menu_open_in_new_tab">Open in new tab</string>
     <string name="context_menu_thread_preview">Thread preview</string>
+    <string name="context_menu_goto_post">Go to post</string>
     <string name="context_menu_reply">Reply to this post</string>
     <string name="context_menu_reply_with_quote">Reply with quote</string>
     <string name="context_menu_reply_no_reading">Reply without reading</string>
     <string name="context_menu_show_thumbnail">Show thumbnail</string>
     <string name="context_menu_attachment_info">Show information</string>
     <string name="context_menu_download_file">Download file</string>
-    <string name="context_menu_select_text">Select text</string>
     <string name="context_menu_copy_text">Copy text</string>
     <string name="context_menu_hide_thread">Hide thread</string>
     <string name="context_menu_hide_post">Hide post</string>
@@ -190,7 +192,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_report">Report abuse</string>
     <string name="context_menu_subscribe">Subscribe</string>
     <string name="context_menu_unsubscribe">Unsubscribe</string>
-    <string name="context_menu_share">Share</string>
+    <string name="context_menu_share_text">Share text</string>
     <string name="context_menu_share_link">Share link</string>
     <string name="context_menu_reverse_search">Image search</string>
     <string name="context_menu_delete_autohide_rule">Remove the rule</string>
@@ -198,6 +200,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="context_menu_quickaccess_remove">Remove from Quick Access</string>
     <string name="context_menu_quickaccess_custom_board">Add custom board</string>
     <string name="context_menu_save_captcha">Save captcha</string>
+    <string name="context_menu_web_search">Web search</string>
     
     <string name="share_via">Share via</string>
     <string name="share_no_tabs">No open tabs</string>
@@ -276,6 +279,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="downloading_start_ticker">Downloading files</string>
     <string name="downloading_success_ticker">All downloads are completed</string>
+    <string name="downloading_success">Downloaded</string>
     <string name="downloading_error_ticker">Some files are not loaded</string>
     <string name="downloading_error_title">Error while downloading</string>
     <string name="downloading_error_report_title">The following files have not been downloaded.</string>
@@ -339,9 +343,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="app_update_checking">Checking for updates</string>
     <string name="app_update_update_available">Update available</string>
-    <string name="app_update_update_dialog_text">New version is available:\n%s\n\nDo you want to open the site?</string>
+    <string name="app_update_update_dialog_text">New version is available:\n%s\n\n%s\n\nDo you want to install it?</string>
     <string name="app_update_update_not_required">No update required</string>
     <string name="app_update_update_error">Cannot check for updates</string>
+    <string name="app_update_download_error">Cannot download update</string>
+    <string name="app_update_install_error">Update install error</string>
     
     <string name="custom_themes_title">Custom themes</string>
     <string name="custom_themes_local">(Select file)</string>
@@ -422,8 +428,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     <string name="infinity_tor_message">To post on 8chan over Tor, you must use the .onion domain.</string>
     
-    <string name="fourchan_prefs_new_recaptcha">Recaptcha 2.0</string>
-    <string name="fourchan_prefs_new_recaptcha_summary">Use the new version of Recaptcha</string>
     <string name="fourchan_prefs_new_recaptcha_fallback">Recaptcha 2.0 fallback</string>
     <string name="fourchan_prefs_new_recaptcha_fallback_summary">Use the Recaptcha 2.0 in compatibility mode</string>
     
@@ -441,6 +445,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_cat_autoupdate">Auto-update</string>
     <string name="pref_cat_subscriptions">Reply tracking</string>
     <string name="pref_cat_cache">Cache</string>
+    <string name="pref_cat_update">Check for updates</string>
     <string name="pref_cat_about">About Overchan</string>
     <string name="pref_cat_proxy">Connection</string>
     <string name="pref_use_proxy">Proxy</string>
@@ -472,6 +477,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_hide_personal_summary">Always use the default values</string>
     <string name="pref_ssl_certificates_title">SSL certificates</string>
     <string name="pref_ssl_certificates_summary">Trusted SSL certificates (exceptions)</string>
+    <string name="pref_safe_posting_title">Safe posting</string>
+    <string name="pref_safe_posting_summary">Send posts by long or double tap</string>
     <string name="pref_random_hash_title">Random hash</string>
     <string name="pref_random_hash_summary">Add a few bytes to the tail of attachment files</string>
     <string name="pref_show_all_chans_list_title">Imageboards list</string>
@@ -480,8 +487,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_show_nsfw_boards_summary">Show unmoderated boards</string>
     <string name="pref_mask_pictures_title">SFW mode</string>
     <string name="pref_mask_pictures_summary">Mask all pictures</string>
-    <string name="pref_autohide_title">Autohide</string>
-    <string name="pref_autohide_summary">Automatic hiding by regular expressions</string>
     <!-- <string name="pref_hide_completely_title">Hide completely</string>
     <string name="pref_hide_completely_summary">Do not show hidden posts and threads</string> -->
     <string name="pref_swipe_to_hide_title">Swipe to hide</string>
@@ -514,6 +519,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_gallery_fullscreen_title">Fullscreen mode</string>
     <string name="pref_gallery_swipe_to_close_title">Swipe to close</string>
     <string name="pref_gallery_swipe_to_close_summary">Swipe up or down to close gallery</string>
+    <string name="pref_gallery_autoplay_title">Autoplay media</string>
+    <string name="pref_gallery_autoplay_summary">Enable autoplay of mediafiles</string>
     <string name="pref_gallery_scroll_thread_title">Scroll to attachments</string>
     <string name="pref_gallery_scroll_thread_summary">Scroll the thread to posts with attachments from gallery</string>
     <string name="pref_gallery_scaleimageview_title">Image Viewer</string>
@@ -522,22 +529,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_gallery_nativegif_summary">Use a native library libgif</string>
     <string name="pref_gallery_videoplayer_title">Built-in video player</string>
     <string name="pref_gallery_videoplayer_summary">May not work on older versions of Android</string>
+    <string name="pref_gallery_webview_videoplayer_title">Use WebView video player</string>
+    <string name="pref_gallery_webview_videoplayer_summary">Use WebView instead of VideoView as built-in video player</string>
     <string name="pref_do_not_download_videos_title">Do not download videos</string>
     <string name="pref_do_not_download_videos_summary">Open video files directly not downloading into cache</string>
     <string name="pref_gallery_audioplayer_title">Built-in audio player</string>
     <string name="pref_gallery_audioplayer_summary">May not work on older versions of Android</string>
     <string name="pref_enable_autoupdate_title">Enable auto-update</string>
     <string name="pref_enable_autoupdate_summary">Update the open threads automatically</string>
+    <string name="pref_autoupdate_stop_on_exit_title">Stop on application exit</string>
+    <string name="pref_autoupdate_stop_on_exit_summary">Stop auto-update when the main app exits</string>
     <string name="pref_autoupdate_only_wifi_title">Wi-Fi only</string>
     <string name="pref_autoupdate_only_wifi_summary">Auto-update over Wi-Fi only</string>
     <string name="pref_autoupdate_delay_title">Interval (in seconds)</string>
-    <string name="pref_autoupdate_delay_summary">Auto-update interval, not less than 30 seconds</string>
+    <string name="pref_autoupdate_delay_summary">Auto-update interval</string>
     <string name="pref_autoupdate_delay_hint">60 seconds by default</string>
     <string name="pref_autoupdate_delay_incorrect">Incorrect value</string>
     <string name="pref_autoupdate_background_title">Update background tabs</string>
     <string name="pref_autoupdate_background_summary">Update tabs marked for auto-update in the background</string>
     <string name="pref_autoupdate_notification_title">In the notification area</string>
     <string name="pref_autoupdate_notification_summary">Does not allow the system to close the process when the application is minimized</string>
+    <string name="pref_autoupdate_progress_title">Show progress in drawer</string>
+    <string name="pref_autoupdate_progress_summary">Show auto-update progress in drawer</string>
     <string name="pref_subscriptions_enabled_title">Track replies</string>
     <string name="pref_subscriptions_enabled_summary">Track replies to posts you are subscribed</string>
     <string name="pref_subscribe_threads_title">Track threads</string>
@@ -557,6 +570,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_clear_cache_title">Clear cache</string>
     <string name="pref_clear_cache_summary">%.1f MB</string>
     <string name="pref_clear_cache_confirmation">Are you sure you want to clear cache?</string>
+    <string name="pref_update_on_startup_title">On application startup</string>
+    <string name="pref_update_on_startup_summary">But not more than once a day</string>
+    <string name="pref_update_allow_beta_title">Allow beta versions</string>
+    <string name="pref_update_allow_beta_summary">Allow installation of beta versions</string>
     <string name="pref_about_version_title">Overchan Android</string>
     <string name="pref_about_license_title">License</string>
     <string name="pref_about_license_summary">GPLv3</string>
@@ -564,6 +581,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_download_dir_summary">The directory where files should be saved</string>
     <string name="pref_download_lazy_title">Lazy downloading</string>
     <string name="pref_download_lazy_summary">Download only thumbnails that are visible currently</string>
+    <string name="pref_download_original_names_title">Original file names</string>
+    <string name="pref_download_original_names_summary">Save attachments under original names</string>
     <string name="pref_download_thumbs_title">Download thumbnails automatically</string>
     <string-array name="pref_download_thumbs_choices">
         <item>Always</item>
@@ -581,6 +600,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item>Futaba</item>
         <item>Photon</item>
         <item>Neutron</item>
+        <item>Burichan</item>
         <item>Gurochan</item>
         <item>Tomorrow</item>
         <item>Mikuba</item>
@@ -589,9 +609,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </string-array>
     <string name="pref_font_size_title">Text size</string>
     <string-array name="pref_font_size_choices">
+        <item>Micro</item>
+        <item>Very small</item>
         <item>Small</item>
         <item>Medium</item>
         <item>Large</item>
+        <item>Very large</item>
         <item>Huge</item>
     </string-array>
     <string name="pref_sidepanel_hide_title">Hide Tabs panel</string>
@@ -624,7 +647,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="app_import_overwrite_warning_message">All data will be irreversibly overwritten</string>
     <string name="pref_post_thumbnail_scale_title">Post thumbnail size</string>
     <string name="pref_key_post_thumbnail_scale_toast">It\'s recommended to clear cache after thumbnail scale has been changed</string>
+    <string name="pref_show_default_names_title">Show default names</string>
+    <string name="pref_show_default_names_summary">Do not hide the name field of anonymous posts</string>
+    <string name="pref_wide_popup_dialogs_title">Wide pop-up dialogs</string>
+    <string name="pref_wide_popup_dialogs_summary">Makes pop-up dialogs easier to read on small screens</string>
     <string name="newtab_select_local_directory">Specify directory location</string>
     <string name="pref_scroll_to_active_tab_summary">Scroll to the active tab when closing inactive tab</string>
     <string name="pref_scroll_to_active_tab_title">Scroll to the active tab</string>
+    <string name="pref_web_search_url_title">Web search URL</string>
+    <string name="pref_web_search_url_summary">Custom Web search URL</string>
+    <string name="pref_makaba_passcode">Passcode</string>
 </resources>

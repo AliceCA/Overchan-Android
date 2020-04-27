@@ -32,8 +32,8 @@ import nya.miku.wishmaster.common.Logger;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
 
 public class GenericThemeEntry implements Parcelable {
-    private static final int BASE_THEME_LIGHT = R.style.Theme_Futaba;
-    private static final int BASE_THEME_DARK = R.style.Theme_Neutron;
+    private static final int BASE_THEME_LIGHT = R.style.Theme_Photon;
+    private static final int BASE_THEME_DARK = R.style.Theme_Tomorrow;
     
     private static GenericThemeEntry cachedInstance = null;
     private static String cachedJsonString = null;
@@ -129,11 +129,6 @@ public class GenericThemeEntry implements Parcelable {
     
     public void setTo(Context context, int... applyStyles) {
         setBaseStyle(context, themeId, fontSizeStyleId);
-        if (customAttrs != null) {
-            Resources.Theme theme = context.getTheme();
-            if (themeId == BASE_THEME_LIGHT) theme.applyStyle(R.style.Custom_Theme_Light, true);
-            else if (themeId == BASE_THEME_DARK) theme.applyStyle(R.style.Custom_Theme_Dark, true);
-        }
         if (applyStyles != null) {
             Resources.Theme theme = context.getTheme();
             for (int i : applyStyles) {
@@ -167,6 +162,7 @@ public class GenericThemeEntry implements Parcelable {
                 case R.attr.materialPrimaryDark: theme.put("materialPrimaryDark", colorToString(customAttrs.valueAt(i))); break;
                 case R.attr.materialNavigationBar: theme.put("materialNavigationBar", colorToString(customAttrs.valueAt(i))); break;
                 case R.attr.activityRootBackground: theme.put("activityRootBackground", colorToString(customAttrs.valueAt(i))); break;
+                case R.attr.sidebarForeground: theme.put("sidebarForeground", colorToString(customAttrs.valueAt(i))); break;
                 case R.attr.sidebarBackground: theme.put("sidebarBackground", colorToString(customAttrs.valueAt(i))); break;
                 case R.attr.sidebarSelectedItem: theme.put("sidebarSelectedItem", colorToString(customAttrs.valueAt(i))); break;
                 case R.attr.listSeparatorBackground: theme.put("listSeparatorBackground", colorToString(customAttrs.valueAt(i))); break;
@@ -214,6 +210,7 @@ public class GenericThemeEntry implements Parcelable {
                 case "materialprimarydark": parseColor(key, theme.getString(key), R.attr.materialPrimaryDark, attrs); break;
                 case "materialnavigationbar": parseColor(key, theme.getString(key), R.attr.materialNavigationBar, attrs); break;
                 case "activityrootbackground": parseColor(key, theme.getString(key), R.attr.activityRootBackground, attrs); break;
+                case "sidebarforeground": parseColor(key, theme.getString(key), R.attr.sidebarForeground, attrs); break;
                 case "sidebarbackground": parseColor(key, theme.getString(key), R.attr.sidebarBackground, attrs); break;
                 case "sidebarselecteditem": parseColor(key, theme.getString(key), R.attr.sidebarSelectedItem, attrs); break;
                 case "listseparatorbackground": parseColor(key, theme.getString(key), R.attr.listSeparatorBackground, attrs); break;

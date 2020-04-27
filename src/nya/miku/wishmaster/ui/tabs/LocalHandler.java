@@ -55,7 +55,12 @@ public class LocalHandler {
             }
         }
         
-        tabsAdapter.add(model);
+        int selected = tabsAdapter.getSelectedTab();
+        if (selected >= 0 && selected < tabsAdapter.getCount()) {
+            tabsAdapter.insert(model, selected + 1);
+        } else {
+            tabsAdapter.add(model);
+        }
         tabsAdapter.setSelectedItemId(model.id);
     }
     

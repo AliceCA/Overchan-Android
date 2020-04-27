@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import nya.miku.wishmaster.common.Logger;
+import nya.miku.wishmaster.lib.ExtendedClickableSpan;
 import nya.miku.wishmaster.ui.CompatibilityImpl;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -11,8 +12,8 @@ import android.os.Build;
 import android.text.Layout;
 import android.text.Selection;
 import android.text.Spannable;
-import android.text.style.ClickableSpan;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.TextView;
 
@@ -105,47 +106,70 @@ public class ClickableLinksTextView extends JellyBeanSpanFixTextView {
         }
     }
 
-    private boolean checkLinksOnTouch(MotionEvent event) {
-        this.copyBaseEditorIfNecessary();
-
-        int action = event.getAction() & 0xff; // getActionMasked()
-        boolean discardNextActionUp = this.getDiscardNextActionUp();
-
-        // call the base method anyway
-        final boolean superResult = super.onTouchEvent(event);
-
-        // the same check as in the super.onTouchEvent(event)
-        if (discardNextActionUp && action == MotionEvent.ACTION_UP) {
-            return superResult;
-        }
-
-        final boolean touchIsFinished = (action == MotionEvent.ACTION_UP) && !this.getIgnoreActionUpEvent() && this.isFocused();
-
-        // Copied from the LinkMovementMethod class
-        if (touchIsFinished) {
-            Spannable spannable = (Spannable) this.getText();
+    private final GestureDetector gestureDetector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+        private ExtendedClickableSpan[] getSpans(MotionEvent event, Spannable spannable) {
             int x = (int) event.getX();
             int y = (int) event.getY();
-
-            x -= this.getTotalPaddingLeft();
-            y -= this.getTotalPaddingTop();
-
-            x += this.getScrollX();
-            y += this.getScrollY();
-
-            Layout layout = this.getLayout();
+            x -= ClickableLinksTextView.this.getTotalPaddingLeft();
+            y -= ClickableLinksTextView.this.getTotalPaddingTop();
+            x += ClickableLinksTextView.this.getScrollX();
+            y += ClickableLinksTextView.this.getScrollY();
+            Layout layout = ClickableLinksTextView.this.getLayout();
             int line = layout.getLineForVertical(y);
             int off = layout.getOffsetForHorizontal(line, x);
+            ExtendedClickableSpan[] link = spannable.getSpans(off, off, ExtendedClickableSpan.class);
+            return link;
+        }
 
-            ClickableSpan[] link = spannable.getSpans(off, off, ClickableSpan.class);
-
-            if (link.length != 0) {
-                link[0].onClick(this);
-                return true;
+        @Override
+        public boolean onDown(MotionEvent event) {
+            Spannable spannable = (Spannable)ClickableLinksTextView.this.getText();
+            ExtendedClickableSpan[] link = getSpans(event, spannable);
+            if (link.length > 0) {
+                return link[0].onClickDown(ClickableLinksTextView.this);
+            } else {
+                return false;
             }
         }
 
-        return superResult;
+        @Override
+        public void onLongPress(MotionEvent event) {
+            Spannable spannable = (Spannable)ClickableLinksTextView.this.getText();
+            ExtendedClickableSpan[] link = getSpans(event, spannable);
+            if (link.length > 0) {
+                link[0].onLongClick(ClickableLinksTextView.this);
+            }
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent event) {
+            boolean discardNextActionUp = ClickableLinksTextView.this.getDiscardNextActionUp();
+            ClickableLinksTextView.super.onTouchEvent(event);
+            if (discardNextActionUp) {
+                return true;
+            }
+            Spannable spannable = (Spannable)ClickableLinksTextView.this.getText();
+            ExtendedClickableSpan[] link = getSpans(event, spannable);
+            if (link.length > 0) {
+                return link[0].onClickUp(ClickableLinksTextView.this);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            return onSingleTapUp(e2);
+        }
+    });
+
+    private boolean checkLinksOnTouch(MotionEvent event) {
+        this.copyBaseEditorIfNecessary();
+        if (gestureDetector.onTouchEvent(event)) {
+            return true;
+        } else {
+            return super.onTouchEvent(event);
+        }
     }
 
     private void copyBaseEditorIfNecessary() {

@@ -26,7 +26,6 @@ import nya.miku.wishmaster.api.AbstractKusabaModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.BoardModel;
-import nya.miku.wishmaster.api.models.CaptchaModel;
 import nya.miku.wishmaster.api.models.PostModel;
 import nya.miku.wishmaster.api.models.SendPostModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
@@ -36,7 +35,9 @@ import nya.miku.wishmaster.api.util.ChanModels;
 import nya.miku.wishmaster.api.util.RegexUtils;
 import nya.miku.wishmaster.api.util.WakabaReader;
 import nya.miku.wishmaster.http.ExtendedMultipartBuilder;
-import nya.miku.wishmaster.http.recaptcha.Recaptcha;
+import nya.miku.wishmaster.http.recaptcha.Recaptcha2;
+import nya.miku.wishmaster.http.recaptcha.Recaptcha2solved;
+
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
@@ -45,7 +46,7 @@ import android.support.v4.content.res.ResourcesCompat;
 
 public class SevenchanModule extends AbstractKusabaModule {
     private static final String CHAN_NAME = "7chan.org";
-    private static final String RECAPTCHA_KEY = "6LdVg8YSAAAAAOhqx0eFT1Pi49fOavnYgy7e-lTO";
+    private static final String RECAPTCHA_KEY = "6LeiXwwUAAAAAEj_XpOaSwy7equ6WFBhWqcBwe4i";
     static final String TIMEZONE = "GMT+4"; // ?
     
     private static final Pattern THREAD_REFERENCE_ALT = Pattern.compile("read.php\\?b=([^&]+)&t=(\\d+)(?:&p=)?(\\d*).*");
@@ -54,7 +55,7 @@ public class SevenchanModule extends AbstractKusabaModule {
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "7ch", "Site Discussion", "7chan & Related Services", false),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "ch7", "Channel7 & Radio7", "7chan & Related Services", true),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "irc", "Internet Relay Circlejerk", "7chan & Related Services", true),
-        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "777", "Trump", "Premium Content", true),
+        ChanModels.obtainSimpleBoardModel(CHAN_NAME, "777", "Moldy Memes", "Premium Content", true),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "b", "Random", "Premium Content", true),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "banner", "Banners", "Premium Content", true),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "fl", "Flash", "Premium Content", true),
@@ -98,8 +99,6 @@ public class SevenchanModule extends AbstractKusabaModule {
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "unf", "Uniforms", "Porn", true),
         ChanModels.obtainSimpleBoardModel(CHAN_NAME, "v", "The Vineyard", "Porn", true)
     };
-    
-    private Recaptcha lastCaptcha = null;
     
     public SevenchanModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -189,26 +188,14 @@ public class SevenchanModule extends AbstractKusabaModule {
     }
     
     @Override
-    public CaptchaModel getNewCaptcha(String boardName, String threadNumber, ProgressListener listener, CancellableTask task) throws Exception {
-        if (threadNumber != null) return null;
-        Recaptcha recaptcha = Recaptcha.obtain(RECAPTCHA_KEY, task, httpClient, useHttps() ? "https" : "http");
-        CaptchaModel model = new CaptchaModel();
-        model.type = CaptchaModel.TYPE_NORMAL;
-        model.bitmap = recaptcha.bitmap;
-        lastCaptcha = recaptcha;
-        return model;
-    }
-    
-    @Override
     protected void setSendPostEntityMain(SendPostModel model, ExtendedMultipartBuilder postEntityBuilder) throws Exception {
         super.setSendPostEntityMain(model, postEntityBuilder);
         if (model.threadNumber == null) {
-            if (lastCaptcha == null) throw new Exception("Invalid captcha");
-            postEntityBuilder.
-                    addString("recaptcha_challenge_field", lastCaptcha.challenge).
-                    addString("recaptcha_response_field", model.captchaAnswer);
-            lastCaptcha = null;
-            
+            String response = Recaptcha2solved.pop(RECAPTCHA_KEY);
+            if (response == null) {
+                throw Recaptcha2.obtain(getUsingUrl(), RECAPTCHA_KEY, null, CHAN_NAME, false);
+            }
+            postEntityBuilder.addString("g-recaptcha-response", response);
             postEntityBuilder.addString("embed", "");
         }
     }

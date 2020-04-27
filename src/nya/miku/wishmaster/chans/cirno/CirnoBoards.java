@@ -28,13 +28,13 @@ import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.SimpleBoardModel;
 
 public class CirnoBoards {
-    private static final String[] ATTACHMENT_FILTERS = new String[] { "jpg", "jpeg", "png", "gif" };
+    private static final String[] ATTACHMENT_FILTERS = new String[] { "jpg", "jpeg", "png", "gif", "webm", "mp4", "ogv", "swf" };
     
-    private static final List<String> IICHAN_BOARDS_410 = Arrays.asList("int", "ts", "cu", "dev", "ci");
+    private static final List<String> IICHAN_BOARDS_410 = Arrays.asList("gnx", "int", "ts", "cu", "dev", "ci");
     
-    private static final List<String> IICHAN_SPOILER_MARK_BOARDS = Arrays.asList("bro", "maid", "med", "tv", "a", "fi", "to", "vn", "vg");
+    private static final List<String> IICHAN_SPOILER_MARK_BOARDS = Arrays.asList("bro", "med", "tv", "a", "fi", "to", "vn", "vg");
     
-    private static final List<String> IICHAN_READONLY_BOARDS = Arrays.asList("o", "w", "abe", "ma", "azu", "me", "hau", "sos", "mo", "sp", "bg");
+    private static final List<String> IICHAN_READONLY_BOARDS = Arrays.asList("o", "w", "abe", "ma", "azu", "me", "hau", "sos", "mo", "sp", "bg", "ls", "maid");
     
     private static final List<BoardModel> LIST_IICHAN = new ArrayList<BoardModel>();
     private static final Map<String, BoardModel> MAP_IICHAN = new HashMap<String, BoardModel>();
@@ -49,7 +49,6 @@ public class CirnoBoards {
         addBoard("an", "Живопись", "Общее", "Кот Синкая", false);
         addBoard("ne", "Животные", "Общее", "Пушок", false);
         addBoard("tran", "Иностранные языки", "Общее", "Е. Д. Поливанов", false);
-        addBoard("int", "International", "Общее", "Anonymous", false);
         addBoard("tv", "Кино, ТВ и мультфильмы", "Общее", "К. С. Станиславский", false);
         addBoard("cu", "Кулинария", "Общее", "Аноним", false);
         addBoard("l", "Литература", "Общее", "Ф. М. Достоевский", false);
@@ -63,7 +62,7 @@ public class CirnoBoards {
         addBoard("x", "Паранормальные явления", "Общее", "Эмма Ай", false);
         addBoard("r", "Просьбы", "Общее", "Аноним", false);
         addBoard("dev", "Разработка", "Общее", "Стив Балмер", false);
-        addBoard("maid", "Служанки", "Общее", "Госюдзин-сама", false);
+        //addBoard("maid", "Служанки", "Общее", "Госюдзин-сама", false);
         addBoard("tu", "Туризм", "Общее", "Аноним", false);
         addBoard("ph", "Фото", "Общее", "Аноним", false);
         addBoard("fr", "Фурри", "Общее", "Аноним", false);
@@ -78,7 +77,7 @@ public class CirnoBoards {
         addBoard("vo", "Vocaloid", "Японская культура", "", false); //hatsune
         addBoard("abe", "ёситоси абэ", "Японская культура", "Chada", false);
         addBoard("c", "Косплей", "Японская культура", "Аноним", false);
-        addBoard("ls", "Lucky☆Star", "Японская культура", "Цукаса", false);
+        //addBoard("ls", "Lucky☆Star", "Японская культура", "Цукаса", false);
         addBoard("rm", "Rozen Maiden", "Японская культура", "Суйгинто", false);
         addBoard("tan", "Сетевые персонажи", "Японская культура", "Уныл-тян", false);
         addBoard("to", "Touhou", "Японская культура", "Нитори", false);

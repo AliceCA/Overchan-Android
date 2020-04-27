@@ -47,7 +47,7 @@ public class ErnstReader implements Closeable {
     
     private static final DateFormat ERNST_DATEFORMAT;
     static {
-        ERNST_DATEFORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        ERNST_DATEFORMAT = new SimpleDateFormat("dd. MMMMM yyyy HH:mm:ss", Locale.GERMANY);
         ERNST_DATEFORMAT.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
     }
     
@@ -86,7 +86,7 @@ public class ErnstReader implements Closeable {
         "<span class=\"teampost\">".toCharArray(),
         "<span class=\"date mobile\">".toCharArray(),
         "<span class=\"sage\">".toCharArray(),
-        "<div class=\"file_container post_body\">".toCharArray(),
+        "<div class=\"file_container".toCharArray(),
         "<div id=\"posttext_".toCharArray(),
         "<aside class=\"omittedposts\">".toCharArray(),
         
@@ -103,7 +103,7 @@ public class ErnstReader implements Closeable {
         "</span>".toCharArray(),
         "</span>".toCharArray(),
         null,
-        "<div class=\"text\">".toCharArray(),
+        "<div class=\"text\"".toCharArray(),
         "</div>".toCharArray(),
         "</aside>".toCharArray(),
     };
@@ -219,6 +219,7 @@ public class ErnstReader implements Closeable {
                 break;
             case FILTER_DATE:
                 String date = readUntilSequence(FILTERS_CLOSE[filterIndex]);
+                date = date.replaceFirst("\\([A-Za-z]+\\.?\\)\\s", ""); //remove day name
                 try {
                     currentPost.timestamp = ERNST_DATEFORMAT.parse(date).getTime();
                 } catch (Exception e) {
@@ -229,13 +230,18 @@ public class ErnstReader implements Closeable {
                 currentPost.sage = true;
                 break;
             case FILTER_ATTACHMENT:
+                skipUntilSequence(">".toCharArray());
                 String attachmentString = StringEscapeUtils.unescapeHtml4(readUntilSequence(FILTERS_CLOSE[filterIndex]));
-                String[] attachments = attachmentString.split("<div class=\"file\">");
-                for (String attachment : attachments) parseAttachment(attachment);
+                String[] attachments = attachmentString.split("\\s*<div class=\"file(?:\\s.+?)?\".*?>");
+                for (String attachment : attachments) {
+                    if (attachment.length() > 0) {
+                        parseAttachment(attachment);
+                    }
+                }
                 break;
             case FILTER_START_COMMENT:
                 skipUntilSequence(">".toCharArray());
-                currentPost.comment = readUntilSequence(FILTERS_CLOSE[filterIndex]);
+                currentPost.comment = readUntilSequence(FILTERS_CLOSE[filterIndex]).trim();
                 finalizePost();
                 break;
             case FILTER_OMITTEDPOSTS:

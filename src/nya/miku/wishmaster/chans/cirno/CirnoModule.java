@@ -19,9 +19,13 @@
 package nya.miku.wishmaster.chans.cirno;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.HttpHeaders;
@@ -34,6 +38,7 @@ import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.AbstractChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
+import nya.miku.wishmaster.api.models.AttachmentModel;
 import nya.miku.wishmaster.api.models.BoardModel;
 import nya.miku.wishmaster.api.models.CaptchaModel;
 import nya.miku.wishmaster.api.models.DeletePostModel;
@@ -62,6 +67,7 @@ import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
 import android.text.InputFilter;
 import android.text.InputType;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  * Основной модуль для iichan.hk
@@ -140,7 +146,7 @@ public class CirnoModule extends AbstractChanModule {
         try {
             responseModel = HttpStreamer.getInstance().getFromUrl(url, rqModel, httpClient, listener, task);
             if (responseModel.statusCode == 200) {
-                in = new WakabaReader(responseModel.stream,
+                in = new CirnoReader(responseModel.stream,
                         url.startsWith(HARUHIISM_URL) ? DateFormats.HARUHIISM_DATE_FORMAT : DateFormats.IICHAN_DATE_FORMAT);
                 if (task != null && task.isCancelled()) throw new Exception("interrupted");
                 return in.readWakabaPage();
@@ -410,5 +416,31 @@ public class CirnoModule extends AbstractChanModule {
             model.otherPath = null;
         }
         return model;
+    }
+
+    private static class CirnoReader extends WakabaReader {
+        private static final Pattern ATTACHMENT_ORIGINAL_NAME_PATTERN = Pattern.compile(">\\s*([^<]*)\\s*</a>");
+
+        public CirnoReader(InputStream in, DateFormat dateFormat) {
+            super(in, dateFormat);
+        }
+
+        @Override
+        protected void parseAttachment(String html) {
+            int oldAttachmentsSize = currentAttachments.size();
+            super.parseAttachment(html);
+            if (currentAttachments.size() > oldAttachmentsSize) {
+                AttachmentModel attachment = currentAttachments.get(currentAttachments.size() - 1);
+                if (attachment.originalName == null) {
+                    Matcher originalNameMatcher = ATTACHMENT_ORIGINAL_NAME_PATTERN.matcher(html);
+                    if (originalNameMatcher.find()) {
+                        String originalName = originalNameMatcher.group(1).trim();
+                        if (originalName != null && originalName.length() > 0) {
+                            attachment.originalName = StringEscapeUtils.unescapeHtml4(originalName);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -47,6 +47,7 @@ public class HispachanReader extends WakabaReader {
     private static final char[] FILE_SIZE_FILTER = "span style=\"font-size: 85%;\">".toCharArray();
     private static final char[] PX_SIZE_FILTER = "span class=\"moculto\">".toCharArray();
     private static final char[] FILE_NAME_FILTER = "span class=\"nombrefile\">".toCharArray();
+    private static final char[] DATE_FILTER = "data-date=\"".toCharArray();
     private static final char[] SPAN_CLOSE_FILTER = "</span>".toCharArray();
     
     private static final Pattern ATTACHMENT_SIZE_PATTERN = Pattern.compile("([\\.\\d]+) ?([km])?b", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -61,6 +62,7 @@ public class HispachanReader extends WakabaReader {
     private int curPxSizePos = 0;
     private int curFilesizePos = 0;
     private int curFilenamePos = 0;
+    private int curDatePos = 0;
     private int currentAttachmentWidth =-1;
     private int currentAttachmentHeight = -1;
     private int currentAttachmentSize = -1;
@@ -127,6 +129,20 @@ public class HispachanReader extends WakabaReader {
             }
         } else {
             if (curFilenamePos != 0) curFilenamePos = ch == FILE_NAME_FILTER[0] ? 1 : 0;
+        }
+        
+        if (ch == DATE_FILTER[curDatePos]) {
+            ++curDatePos;
+            if (curDatePos == DATE_FILTER.length) {
+                String date = readUntilSequence("\"".toCharArray());
+                if (date.endsWith(" UTC")) {
+                    date = date.substring(0, date.length() - 4);
+                }
+                parseDate(date);
+                curDatePos = 0;
+            }
+        } else {
+            if (curDatePos != 0) curDatePos = ch == DATE_FILTER[0] ? 1 : 0;
         }
     }
     

@@ -66,21 +66,45 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="actionSave">@drawable/ic_action_save_dark</item>
     </style>
     
-    <style name="TextAppearance_Small.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">11sp</item> </style>
-    <style name="TextAppearance_Small.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">13sp</item> </style>
-    <style name="TextAppearance_Small.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">16sp</item> </style>
+    <style name="TextAppearance_Micro.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">11sp</item> </style>
+    <style name="TextAppearance_Micro.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">13sp</item> </style>
+    <style name="TextAppearance_Micro.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">15sp</item> </style>
     
-    <style name="TextAppearance_Medium.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">13sp</item> </style>
-    <style name="TextAppearance_Medium.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">15sp</item> </style>
+    <style name="TextAppearance_VerySmall.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">12sp</item> </style>
+    <style name="TextAppearance_VerySmall.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">14sp</item> </style>
+    <style name="TextAppearance_VerySmall.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">16sp</item> </style>
+    
+    <style name="TextAppearance_Small.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">13sp</item> </style>
+    <style name="TextAppearance_Small.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">15sp</item> </style>
+    <style name="TextAppearance_Small.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">17sp</item> </style>
+    
+    <style name="TextAppearance_Medium.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">14sp</item> </style>
+    <style name="TextAppearance_Medium.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">16sp</item> </style>
     <style name="TextAppearance_Medium.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">18sp</item> </style>
     
     <style name="TextAppearance_Large.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">15sp</item> </style>
     <style name="TextAppearance_Large.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">17sp</item> </style>
-    <style name="TextAppearance_Large.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">20sp</item> </style>
+    <style name="TextAppearance_Large.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">19sp</item> </style>
+    
+    <style name="TextAppearance_VeryLarge.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">16sp</item> </style>
+    <style name="TextAppearance_VeryLarge.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">18sp</item> </style>
+    <style name="TextAppearance_VeryLarge.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">20sp</item> </style>
     
     <style name="TextAppearance_Huge.Small" parent="@android:style/TextAppearance.Small"> <item name="android:textSize">17sp</item> </style>
     <style name="TextAppearance_Huge.Medium" parent="@android:style/TextAppearance.Medium"> <item name="android:textSize">19sp</item> </style>
-    <style name="TextAppearance_Huge.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">22sp</item> </style>
+    <style name="TextAppearance_Huge.Large" parent="@android:style/TextAppearance.Large"> <item name="android:textSize">21sp</item> </style>
+    
+    <style name="FontSize_Micro">
+        <item name="android:textAppearanceSmall">@style/TextAppearance_Micro.Small</item>
+        <item name="android:textAppearanceMedium">@style/TextAppearance_Micro.Medium</item>
+        <item name="android:textAppearanceLarge">@style/TextAppearance_Micro.Large</item>
+    </style>
+    
+    <style name="FontSize_VerySmall">
+        <item name="android:textAppearanceSmall">@style/TextAppearance_VerySmall.Small</item>
+        <item name="android:textAppearanceMedium">@style/TextAppearance_VerySmall.Medium</item>
+        <item name="android:textAppearanceLarge">@style/TextAppearance_VerySmall.Large</item>
+    </style>
     
     <style name="FontSize_Small">
         <item name="android:textAppearanceSmall">@style/TextAppearance_Small.Small</item>
@@ -100,18 +124,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="android:textAppearanceLarge">@style/TextAppearance_Large.Large</item>
     </style>
     
+    <style name="FontSize_VeryLarge">
+        <item name="android:textAppearanceSmall">@style/TextAppearance_VeryLarge.Small</item>
+        <item name="android:textAppearanceMedium">@style/TextAppearance_VeryLarge.Medium</item>
+        <item name="android:textAppearanceLarge">@style/TextAppearance_VeryLarge.Large</item>
+    </style>
+    
     <style name="FontSize_Huge">
         <item name="android:textAppearanceSmall">@style/TextAppearance_Huge.Small</item>
         <item name="android:textAppearanceMedium">@style/TextAppearance_Huge.Medium</item>
         <item name="android:textAppearanceLarge">@style/TextAppearance_Huge.Large</item>
-    </style>
-    
-    <style name="Custom_Theme_Light">
-        <item name="android:textColorPrimary">#000001</item>
-    </style>
-    
-    <style name="Custom_Theme_Dark">
-        <item name="android:textColorPrimary">#FFFFFE</item>
     </style>
     
     <!-- Themes -->
@@ -121,6 +143,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="materialPrimaryDark">#7F7F75</item>
         <item name="android:textColorPrimary">#800000</item>
         <item name="activityRootBackground">#FFFFEE</item>
+        <item name="sidebarForeground">#800000</item>
         <item name="sidebarBackground">#CCFFFFEE</item>
         <item name="sidebarSelectedItem">@drawable/sidebar_selected_futaba</item>
         <item name="listSeparatorBackground">#F0E0D6</item>
@@ -150,6 +173,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="materialPrimaryDark">#757575</item>
         <item name="android:textColorPrimary">#333333</item>
         <item name="activityRootBackground">#EEEEEE</item>
+        <item name="sidebarForeground">#333333</item>
         <item name="sidebarBackground">#CCEEEEEE</item>
         <item name="sidebarSelectedItem">@drawable/sidebar_selected_photon</item>
         <item name="listSeparatorBackground">#DDDDDD</item>
@@ -178,6 +202,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="materialPrimaryDark">#000000</item>
         <item name="android:textColorPrimary">#698CC0</item>
         <item name="activityRootBackground">#212121</item>
+        <item name="sidebarForeground">#698CC0</item>
         <item name="sidebarBackground">#CC212121</item>
         <item name="sidebarSelectedItem">@drawable/sidebar_selected_neutron</item>
         <item name="listSeparatorBackground">#191919</item>
@@ -201,11 +226,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="subscriptionBackground">#444444</item>
     </style>
     
+    <style name="Theme_Burichan" parent="@style/Theme_Light_Base">
+        <item name="materialPrimary">#EEF2FF</item>
+        <item name="materialPrimaryDark">#34345C</item>
+        <item name="android:textColorPrimary">#34345C</item>
+        <item name="activityRootBackground">#EEF2FF</item>
+        <item name="sidebarForeground">#34345C</item>
+        <item name="sidebarBackground">#DDEEF2FF</item>
+        <item name="sidebarSelectedItem">@drawable/sidebar_selected_burichan</item>
+        <item name="listSeparatorBackground">#B7C5D9</item>
+        <item name="postUnreadOverlay">#7FFF7F7F</item>
+        <item name="postBackground">#D6DAF0</item>
+        <item name="postForeground">#000000</item>
+        <item name="postIndexForeground">#789922</item>
+        <item name="postIndexOverBumpLimit">#C41E3A</item>
+        <item name="postNumberForeground">#000000</item>
+        <item name="postNameForeground">#117743</item>
+        <item name="postOpForeground">#008000</item>
+        <item name="postSageForeground">#993333</item>
+        <item name="postTripForeground">#228854</item>
+        <item name="postTitleForeground">#0F0C5D</item>
+        <item name="postQuoteForeground">#789922</item>
+        <item name="spoilerForeground">#FFFFFF</item>
+        <item name="spoilerBackground">#000000</item>
+        <item name="urlLinkForeground">#D00000</item>
+        <item name="itemInfoForeground">#666666</item>
+        <item name="searchHighlightBackground">#FF9632</item>
+        <item name="subscriptionBackground">#9988EE</item>
+    </style>
+
     <style name="Theme_Gurochan" parent="@style/Theme_Light_Base">
         <item name="materialPrimary">#EDDAD2</item>
         <item name="materialPrimaryDark">#766D69</item>
         <item name="android:textColorPrimary">#000000</item>
         <item name="activityRootBackground">#EDDAD2</item>
+        <item name="sidebarForeground">#000000</item>
         <item name="sidebarBackground">#CCEDDAD2</item>
         <item name="sidebarSelectedItem">@drawable/sidebar_selected_gurochan</item>
         <item name="listSeparatorBackground">#D9AF9E</item>
@@ -234,6 +289,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="materialPrimaryDark">#141619</item>
         <item name="android:textColorPrimary">#C5C8C6</item>
         <item name="activityRootBackground">#1D1F21</item>
+        <item name="sidebarForeground">#C5C8C6</item>
         <item name="sidebarBackground">#CC1D1F21</item>
         <item name="sidebarSelectedItem">@drawable/sidebar_selected_tomorrow</item>
         <item name="listSeparatorBackground">#282A2E</item>
@@ -262,6 +318,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="materialPrimaryDark">#408090</item>
         <item name="android:textColorPrimary">#000000</item>
         <item name="activityRootBackground">#FAFAFA</item>
+        <item name="sidebarForeground">#000000</item>
         <item name="sidebarBackground">#CCFAFAFA</item>
         <item name="sidebarSelectedItem">@drawable/sidebar_selected_mikuba</item>
         <item name="listSeparatorBackground">#EAEFEF</item>
@@ -290,6 +347,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="materialPrimaryDark">#16a085</item>
         <item name="android:textColorPrimary">#eeeeee</item>
         <item name="activityRootBackground">#1e1e1e</item>
+        <item name="sidebarForeground">#eeeeee</item>
         <item name="sidebarBackground">#cc212121</item>
         <item name="sidebarSelectedItem">@drawable/sidebar_selected_dark_mint</item>
         <item name="listSeparatorBackground">#16a085</item>

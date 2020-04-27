@@ -24,7 +24,9 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.CheckBoxPreference;
 import android.preference.PreferenceGroup;
+import android.preference.EditTextPreference;
 import android.support.v4.content.res.ResourcesCompat;
+import android.text.InputType;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -68,11 +70,12 @@ public class ArhivachModule extends CloudflareChanModule {
 
     private static final Pattern INDEX_PAGE_PATTERN = Pattern.compile("index/(\\d+)/?(.*)");
     static final String CHAN_NAME = "Arhivach.org";
-    private static final String DEFAULT_DOMAIN = "arhivach.org";
+    private static final String DEFAULT_DOMAIN = "arhivach.ng";
     private static final String ONION_DOMAIN = "arhivachovtj2jrp.onion";
-    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN };
+    private static final String[] DOMAINS = new String[] { DEFAULT_DOMAIN, ONION_DOMAIN, "arhivach.org", "arhivach.tk", "arhivach.cf" };
 
     private static final String PREF_KEY_USE_ONION = "PREF_KEY_USE_ONION";
+    private static final String PREF_KEY_DOMAIN = "PREF_KEY_DOMAIN";
 
     public ArhivachModule(SharedPreferences preferences, Resources resources) {
         super(preferences, resources);
@@ -94,7 +97,9 @@ public class ArhivachModule extends CloudflareChanModule {
     }
 
     private String getUsingDomain() {
-        return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN : DEFAULT_DOMAIN;
+        String prefDomain = preferences.getString(getSharedKey(PREF_KEY_DOMAIN), "");
+        return preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) ? ONION_DOMAIN :
+            prefDomain.equals("") ? DEFAULT_DOMAIN : prefDomain;
     }
 
     @Override
@@ -107,13 +112,22 @@ public class ArhivachModule extends CloudflareChanModule {
     }
 
     private boolean useHttps() {
-        return !preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) && useHttps(false);
+        return !preferences.getBoolean(getSharedKey(PREF_KEY_USE_ONION), false) && useHttps(true);
     }
 
     @Override
     public void addPreferencesOnScreen(PreferenceGroup preferenceGroup) {
         Context context = preferenceGroup.getContext();
-        CheckBoxPreference httpsPref = addHttpsPreference(preferenceGroup, false);
+        CheckBoxPreference httpsPref = addHttpsPreference(preferenceGroup, true);
+        EditTextPreference domainPref = new EditTextPreference(context);
+        domainPref.setTitle(R.string.pref_domain);
+        domainPref.setSummary(R.string.pref_domain);
+        domainPref.setDialogTitle(R.string.pref_domain);
+        domainPref.setKey(getSharedKey(PREF_KEY_DOMAIN));
+        domainPref.getEditText().setHint(DEFAULT_DOMAIN);
+        domainPref.getEditText().setSingleLine();
+        domainPref.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        preferenceGroup.addPreference(domainPref);
         CheckBoxPreference onionPref = new LazyPreferences.CheckBoxPreference(context);
         onionPref.setTitle(R.string.pref_use_onion);
         onionPref.setSummary(R.string.pref_use_onion_summary);
@@ -122,6 +136,7 @@ public class ArhivachModule extends CloudflareChanModule {
         onionPref.setDisableDependentsState(true);
         preferenceGroup.addPreference(onionPref);
         httpsPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
+        domainPref.setDependency(getSharedKey(PREF_KEY_USE_ONION));
         addCloudflareRecaptchaFallbackPreference(preferenceGroup);
         addProxyPreferences(preferenceGroup);
     }
@@ -322,7 +337,7 @@ public class ArhivachModule extends CloudflareChanModule {
 
     @Override
     public UrlPageModel parseUrl(String url) throws IllegalArgumentException {
-        String urlPath  = UrlPathUtils.getUrlPath(url, DOMAINS);
+        String urlPath  = UrlPathUtils.getUrlPath(url, getUsingDomain(), DOMAINS);
         if (urlPath == null) throw new IllegalArgumentException("wrong domain");
         urlPath = urlPath.toLowerCase(Locale.US);
         

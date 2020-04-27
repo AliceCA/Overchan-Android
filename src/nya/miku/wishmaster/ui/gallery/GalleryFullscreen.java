@@ -147,6 +147,21 @@ public class GalleryFullscreen {
             showUI(hideAfterDelay, true);
         }
         
+        @Override
+        public void hideUI() {
+            Async.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setSystemUiHidden();
+                }
+            });
+        }
+
+        @Override
+        public boolean isUIVisible() {
+            return isSystemUiVisible();
+        }
+
         private void showUI(boolean hideAfterDelay, boolean onlyKeep) {
             if (!onlyKeep) setSystemUiVisible();
             if (hideAfterDelay) {
@@ -189,6 +204,10 @@ public class GalleryFullscreen {
         
         private void setSystemUiHidden() {
             decorView.setSystemUiVisibility(SYSTEM_UI_HIDDEN);
+        }
+
+        private boolean isSystemUiVisible() {
+            return decorView.getSystemUiVisibility() == SYSTEM_UI_VISIBLE;
         }
         
         @TargetApi(Build.VERSION_CODES.KITKAT)

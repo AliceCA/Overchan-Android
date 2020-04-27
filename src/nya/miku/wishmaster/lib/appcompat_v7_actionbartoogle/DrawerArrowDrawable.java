@@ -19,6 +19,7 @@ import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 //import android.support.v7.appcompat.R;
 import nya.miku.wishmaster.ui.CompatibilityUtils;
+import nya.miku.wishmaster.ui.theme.ThemeUtils;
 
 /**
  * A drawable that can draw a "Drawer hamburger" menu or an Arrow and animate between them.
@@ -71,8 +72,7 @@ abstract class DrawerArrowDrawable extends Drawable {
                 .getDimension(R.styleable.DrawerArrowToggle_middleBarArrowSize, 0);
         typedArray.recycle();*/
         
-        TypedValue typedValue = new TypedValue();
-        context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, typedValue, true);
+        TypedValue typedValue = ThemeUtils.resolveAttribute(context.getTheme(), android.R.attr.textColorPrimary, true);
         int color;
         if (typedValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && typedValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
             color = typedValue.data;

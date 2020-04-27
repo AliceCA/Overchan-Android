@@ -86,8 +86,8 @@ public class DobroModule extends AbstractChanModule {
     
     private static final Pattern URL_THREADPAGE_PATTERN = Pattern.compile("(.+?)/res/([0-9]+?)\\.xhtml(.*)");
     
-    private static final String DOMAINS_HINT = "dobrochan.com, dobrochan.org, dobrochan.ru";
-    private static final List<String> DOMAINS_LIST = Arrays.asList(new String[] { "dobrochan.ru", "dobrochan.com", "dobrochan.org" });
+    private static final String DOMAINS_HINT = "dobrochan.com, dobrochan.org, dobrochan.ru, dobrochan.net (https)";
+    private static final List<String> DOMAINS_LIST = Arrays.asList("dobrochan.ru", "dobrochan.com", "dobrochan.org", "dobrochan.net");
     
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
     static {
@@ -144,8 +144,12 @@ public class DobroModule extends AbstractChanModule {
         return domain;
     }
     
+    private boolean useHttps() {
+        return useHttps(false);
+    }
+    
     private String getDomainUrl() {
-        return "http://" + getDomain() + "/";
+        return (useHttps() ? "https://" : "http://") + getDomain() + "/";
     }
     
     @Override
@@ -260,6 +264,7 @@ public class DobroModule extends AbstractChanModule {
         addRatingPreference(preferenceGroup);
         addCaptchaPreference(preferenceGroup);
         addDomainPreferences(preferenceGroup);
+        addHttpsPreference(preferenceGroup, false);
         super.addPreferencesOnScreen(preferenceGroup);
     }
     
@@ -583,7 +588,7 @@ public class DobroModule extends AbstractChanModule {
             } else {
                 model.type = UrlPageModel.TYPE_BOARDPAGE;
                 
-                if (path.indexOf("/") == -1) {
+                if (!path.contains("/")) {
                     if (path.equals("")) throw new Exception();
                     model.boardName = path;
                     model.boardPage = 0;
@@ -598,7 +603,7 @@ public class DobroModule extends AbstractChanModule {
                 }
             }
         } catch (Exception e) {
-            if (path == null || path.length() == 0 || path.equals("/")) {
+            if (path.length() == 0 || path.equals("/")) {
                 model.type = UrlPageModel.TYPE_INDEXPAGE;
             } else {
                 model.type = UrlPageModel.TYPE_OTHERPAGE;

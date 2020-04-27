@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
+import android.net.Uri;
 
 /**
  * Исключение, вызванное запросом проверки Cloudflare
@@ -43,12 +44,13 @@ public class CloudflareException extends InteractiveException {
     
     private static final Pattern PATTERN_STOKEN = Pattern.compile("stoken=\"?([^\"&]+)");
     private static final Pattern PATTERN_ID = Pattern.compile("data-ray=\"?([^\"&]+)");
+    private static final Pattern PATTERN_S = Pattern.compile("<input[^>]* name=\"s\"[^>]* value=\"(.+?)\"");
     
     private boolean recaptcha;
     private String url;
     private String sToken;
     private boolean fallback;
-    private String checkCaptchaUrlFormat;
+    private String checkCaptchaUrlPrefix;
     private String chanName;
     
     //для создания экземплятов используются статические методы 
@@ -79,12 +81,12 @@ public class CloudflareException extends InteractiveException {
         return antiDDOS(url, chanName);
     }
     
-    public static CloudflareException withRecaptcha(String url, String chanName, String sToken, String checkUrlFormat, boolean fallback) {
+    public static CloudflareException withRecaptcha(String url, String chanName, String sToken, String checkUrlPrefix, boolean fallback) {
         CloudflareException e = new CloudflareException();
         e.url = url;
         e.recaptcha = true;
         e.sToken = sToken;
-        e.checkCaptchaUrlFormat = checkUrlFormat;
+        e.checkCaptchaUrlPrefix = checkUrlPrefix;
         e.chanName = chanName;
         e.fallback = fallback;
         return e;
@@ -112,13 +114,20 @@ public class CloudflareException extends InteractiveException {
         m = PATTERN_ID.matcher(htmlString);
         if (m.find()) id = m.group(1);
         
+        String s = null;
+        m = PATTERN_S.matcher(htmlString);
+        if (m.find()) s = m.group(1);
+        
         try {
             URL baseUrl = new URL(url);
             url = baseUrl.getProtocol() + "://" + baseUrl.getHost() + "/";
         } catch (Exception e) {
             if (!url.endsWith("/")) url = url + "/";
         }
-        String checkUrl = url + "cdn-cgi/l/chk_captcha?" + (id != null ? ("id=" + id + "&") : "") + "g-recaptcha-response=%s";
+        String checkUrl = url + "cdn-cgi/l/chk_captcha?"
+                + (s != null ? ("s=" +  Uri.encode(s) + "&") : "")
+                + (id != null ? ("id=" + id + "&") : "")
+                + "g-recaptcha-response=";
         return withRecaptcha(url, chanName, token, checkUrl, fallback);
     }
     
@@ -162,11 +171,11 @@ public class CloudflareException extends InteractiveException {
     }
     
     /**
-     * получить строку-формат URL для проверки рекапчи
-     * @return формат (первый %s - challenge, второй %s - ответ на капчу)
+     * получить первую часть URL для проверки рекапчи
+     * @return строка, которую необходимо объединить со строкой ответа на капчу
      */
-    /*package*/ String getCheckCaptchaUrlFormat() {
-        return checkCaptchaUrlFormat;
+    /*package*/ String getCheckCaptchaUrlPrefix() {
+        return checkCaptchaUrlPrefix;
     }
     
     /**

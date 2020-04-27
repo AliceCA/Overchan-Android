@@ -41,6 +41,9 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceGroup;
 import android.support.v4.content.res.ResourcesCompat;
+
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.api.CloudflareChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
@@ -203,7 +206,7 @@ public class HorochanModule extends CloudflareChanModule {
         model.parentThread = Long.toString(json.optLong("parent", 0));
         // Is OP
         if (model.parentThread.equals("0")) {
-            model.subject = json.optString("subject");
+            model.subject = StringEscapeUtils.unescapeHtml4(json.optString("subject"));
             model.parentThread = model.number;
         }
         JSONArray files = json.optJSONArray("files");

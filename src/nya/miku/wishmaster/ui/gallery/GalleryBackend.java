@@ -33,6 +33,7 @@ import org.apache.commons.lang3.tuple.Triple;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -156,12 +157,12 @@ public class GalleryBackend extends Service {
         }
         
         @Override
-        public String getAttachment(int contextId, GalleryAttachmentInfo attachment, GalleryGetterCallback callback) {
+        public String getAttachment(int contextId, GalleryAttachmentInfo attachment, boolean localOnly, GalleryGetterCallback callback) {
             GalleryBackend service = this.service.get();
             if (service == null) return null;
             
             try {
-                File file = service.contexts.get(contextId).getFile(attachment.hash, attachment.attachment, callback);
+                File file = service.contexts.get(contextId).getFile(attachment.hash, attachment.attachment, localOnly, callback);
                 if (file == null) return null;
                 return file.getPath();
             } catch (Exception e) {
@@ -179,16 +180,25 @@ public class GalleryBackend extends Service {
         }
         
         @Override
-        public void tryScrollParent(int contextId, String postNumber) {
+        public String getAttachmentInfoString(int contextId, GalleryAttachmentInfo attachment) {
+            GalleryBackend service = this.service.get();
+            if (service == null) return null;
+
+            return service.contexts.get(contextId).getAttachmentInfoString(attachment.attachment);
+        }
+
+        @Override
+        public void tryScrollParent(int contextId, String postNumber, boolean closeDialogs) {
             GalleryBackend service = this.service.get();
             if (service == null) return;
             
-            service.contexts.get(contextId).tryScrollParent(postNumber);
+            service.contexts.get(contextId).tryScrollParent(postNumber, closeDialogs);
         }
     }
     
     private class GalleryContext {
         private ChanModule chan;
+        private Resources resources;
         private String customSubdir;
         private BoardModel boardModel;
         private ReadableContainer localFile;
@@ -197,6 +207,7 @@ public class GalleryBackend extends Service {
         public GalleryContext(GalleryInitData initData) {
             initResult = new GalleryInitResult();
             boardModel = initData.boardModel;
+            resources = MainApplication.getInstance().resources;
             chan = MainApplication.getInstance().getChanModule(boardModel.chan);
             
             if (initData.localFileName != null) {
@@ -208,6 +219,16 @@ public class GalleryBackend extends Service {
             }
             
             PresentationModel presentationModel = MainApplication.getInstance().pagesCache.getPresentationModel(initData.pageHash);
+            if (presentationModel == null) {
+                TabsSwitcher tabsSwitcher = MainApplication.getInstance().tabsSwitcher;
+                if (tabsSwitcher.currentFragment instanceof BoardFragment) {
+                    BoardFragment fragment = (BoardFragment)tabsSwitcher.currentFragment;
+                    TabModel currentTab = fragment.getCurrentTabModel();
+                    if (currentTab != null && currentTab.hash != null && currentTab.hash.equals(initData.pageHash)) {
+                        presentationModel = fragment.getCurrentPresentationModel();
+                    }
+                }
+            }
             if (presentationModel != null) {
                 boolean isThread = presentationModel.source.pageModel.type == UrlPageModel.TYPE_THREADPAGE;
                 this.customSubdir = BoardFragment.getCustomSubdir(presentationModel.source.pageModel);
@@ -248,11 +269,39 @@ public class GalleryBackend extends Service {
                         Triple.of(initData.attachment, ChanModels.hashAttachmentModel(initData.attachment), (String)null));
                 initResult.initPosition = 0;
             }
+            initResult.hasMoreAttachments = initResult.attachments.size();
         }
         
         public GalleryInitResult getInitResult() {
-            GalleryInitResult result = initResult;
-            initResult = null;
+            if (initResult == null)
+                return null;
+            GalleryInitResult result = new GalleryInitResult();
+            result.initPosition = initResult.initPosition;
+            result.shouldWaitForPageLoaded = initResult.shouldWaitForPageLoaded;
+            final int sent = initResult.attachments.size() - initResult.hasMoreAttachments;
+            final int limit = 512 * 1024;
+            int total = 16;
+            int n = 0;
+            for (int i = sent; i < initResult.attachments.size(); ++i) {
+                int size = 40;
+                Triple<AttachmentModel, String, String> tuple = initResult.attachments.get(i);
+                AttachmentModel attachment = tuple.getLeft();
+                String hash = tuple.getMiddle();
+                String post = tuple.getRight();
+                if (attachment.thumbnail != null) size += attachment.thumbnail.length() * 2;
+                if (attachment.path != null) size += attachment.path.length() * 2;
+                if (attachment.originalName != null) size += attachment.originalName.length() * 2;
+                if (hash != null) size += hash.length() * 2;
+                if (post != null) size += post.length() * 2;
+                if (total + size > limit)
+                    break;
+                total += size;
+                ++n;
+            }
+            result.attachments = initResult.attachments.subList(sent, sent + n);
+            result.hasMoreAttachments = initResult.hasMoreAttachments -= n;
+            if (initResult.hasMoreAttachments == 0)
+                initResult = null;
             return result;
         }
         
@@ -271,41 +320,43 @@ public class GalleryBackend extends Service {
             return bmp;
         }
         
-        public File getFile(String attachmentHash, AttachmentModel attachmentModel, GalleryGetterCallback callback) throws RemoteException {
+        public File getFile(String attachmentHash, AttachmentModel attachmentModel, boolean localOnly, GalleryGetterCallback callback) throws RemoteException {
             AsyncCallback asyncCallback = new AsyncCallback(callback);
             try {
                 Async.runAsync(asyncCallback);
-                return getFile(attachmentHash, attachmentModel, asyncCallback);
+                return getFile(attachmentHash, attachmentModel, localOnly, asyncCallback);
             } finally {
                 asyncCallback.stop();
             }
         }
         
-        public File getFile(String attachmentHash, AttachmentModel attachmentModel, final AsyncCallback callback) throws RemoteException {
+        public File getFile(String attachmentHash, AttachmentModel attachmentModel, boolean localOnly, final AsyncCallback callback) throws RemoteException {
             File file = fileCache.get(FileCache.PREFIX_ORIGINALS + attachmentHash + Attachments.getAttachmentExtention(attachmentModel));
             if (file != null) {
                 String filename = file.getAbsolutePath();
                 while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
                 if (callback.isCancelled()) return null;
             }
-            if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
-                File dir = new File(settings.getDownloadDirectory(), chan.getChanName());
-                file = new File(dir, Attachments.getAttachmentLocalFileName(attachmentModel, boardModel));
-                String filename = file.getAbsolutePath();
-                while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
-                if (callback.isCancelled()) return null;
-            }
-            if (customSubdir != null) {
+            if (!settings.isDownloadOriginalNames()) {
                 if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
                     File dir = new File(settings.getDownloadDirectory(), chan.getChanName());
-                    dir = new File(dir, customSubdir);
                     file = new File(dir, Attachments.getAttachmentLocalFileName(attachmentModel, boardModel));
                     String filename = file.getAbsolutePath();
                     while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
                     if (callback.isCancelled()) return null;
                 }
+                if (customSubdir != null) {
+                    if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
+                        File dir = new File(settings.getDownloadDirectory(), chan.getChanName());
+                        dir = new File(dir, customSubdir);
+                        file = new File(dir, Attachments.getAttachmentLocalFileName(attachmentModel, boardModel));
+                        String filename = file.getAbsolutePath();
+                        while (downloadingLocker.isLocked(filename)) downloadingLocker.waitUnlock(filename);
+                        if (callback.isCancelled()) return null;
+                    }
+                }
             }
-            if (!file.exists() || file.isDirectory() || file.length() == 0) {
+            if (file == null || !file.exists() || file.isDirectory() || file.length() == 0) {
                 callback.getCallback().showLoading();
                 file = fileCache.create(FileCache.PREFIX_ORIGINALS + attachmentHash + Attachments.getAttachmentExtention(attachmentModel));
                 String filename = file.getAbsolutePath();
@@ -320,6 +371,8 @@ public class GalleryBackend extends Service {
                     if (localFile != null && localFile.hasFile(localName)) {
                         fromLocal = IOUtils.modifyInputStream(localFile.openStream(localName), null, callback);
                         IOUtils.copyStream(fromLocal, out);
+                    } else if (localOnly) {
+                        return null;
                     } else {
                         chan.downloadFile(attachmentModel.path, out, callback, callback);
                     }
@@ -349,7 +402,11 @@ public class GalleryBackend extends Service {
             return chan.fixRelativeUrl(url);
         }
         
-        public void tryScrollParent(final String postNumber) {
+        public String getAttachmentInfoString(AttachmentModel attachment) {
+            return Attachments.getAttachmentInfoString(chan, attachment, resources);
+        }
+
+        public void tryScrollParent(final String postNumber, final boolean closeDialogs) {
             try {
                 TabsState tabsState = MainApplication.getInstance().tabsState;
                 final TabsSwitcher tabsSwitcher = MainApplication.getInstance().tabsSwitcher;
@@ -359,7 +416,7 @@ public class GalleryBackend extends Service {
                         Async.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                ((BoardFragment) tabsSwitcher.currentFragment).scrollToItem(postNumber);
+                                ((BoardFragment) tabsSwitcher.currentFragment).scrollToItem(postNumber, closeDialogs);
                             }
                         });
                     }

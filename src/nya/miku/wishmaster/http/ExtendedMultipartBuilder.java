@@ -87,8 +87,9 @@ public class ExtendedMultipartBuilder {
         return addPart(key, new StringBody(value, ContentType.create("text/plain", "UTF-8")));
     }
     
-    private ExtendedMultipartBuilder addFile(String key, File value, final int randomTail) {
-        return addPart(key, new FileBody(value) {
+    private ExtendedMultipartBuilder addFile(String key, File value, String mimeType, final int randomTail) {
+        return addPart(key, new FileBody(value, (mimeType == null || mimeType.length() == 0) ?
+                ContentType.APPLICATION_OCTET_STREAM : ContentType.create(mimeType)) {
             @Override
             public long getContentLength() {
                 return super.getContentLength() + randomTail;
@@ -109,11 +110,23 @@ public class ExtendedMultipartBuilder {
      * Добавить файл
      * @param key имя (ключ)
      * @param file прикрепляемый файл
+     * @param mimeType тип прикрепляемого файла
+     * @param uniqueHash если true, добавит в конец файла несколько рандомных байтов, чтобы создать уникальный хэш
+     * @return этот объект
+     */
+    public ExtendedMultipartBuilder addFile(String key, File file, String mimeType, boolean uniqueHash) {
+        return addFile(key, file, mimeType, uniqueHash ? RANDOMHASH_TAIL_SIZE : 0);
+    }
+
+    /**
+     * Добавить файл
+     * @param key имя (ключ)
+     * @param file прикрепляемый файл
      * @param uniqueHash если true, добавит в конец файла несколько рандомных байтов, чтобы создать уникальный хэш
      * @return этот объект
      */
     public ExtendedMultipartBuilder addFile(String key, File file, boolean uniqueHash) {
-        return addFile(key, file, uniqueHash ? RANDOMHASH_TAIL_SIZE : 0);
+        return addFile(key, file, null, uniqueHash ? RANDOMHASH_TAIL_SIZE : 0);
     }
     
     /**
