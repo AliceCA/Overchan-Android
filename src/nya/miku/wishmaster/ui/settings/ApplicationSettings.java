@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import nya.miku.wishmaster.BuildConfig;
 import nya.miku.wishmaster.R;
 import nya.miku.wishmaster.lib.org_json.JSONException;
 import nya.miku.wishmaster.lib.org_json.JSONObject;
@@ -40,6 +41,7 @@ public class ApplicationSettings {
     private final Resources resources;
     private final boolean isTablet;
     private final boolean isSFW;
+    private final boolean isFDroid;
     
     private void initHiddenPreferences() {
         if (!preferences.contains(resources.getString(R.string.pref_key_autohide_json)))
@@ -55,6 +57,7 @@ public class ApplicationSettings {
         this.resources = resources;
         this.isTablet = (resources.getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
         this.isSFW = !R.class.getPackage().getName().endsWith(".wishmaster");
+        this.isFDroid = BuildConfig.APPLICATION_ID.equals("bus.chio.wishmaster");
         initHiddenPreferences();
     }
     
@@ -235,11 +238,11 @@ public class ApplicationSettings {
     }
     
     public boolean isUpdateOnStartup() {
-        return preferences.getBoolean(resources.getString(R.string.pref_key_update_on_startup), false);
+        return !isFDroidRelease() && preferences.getBoolean(resources.getString(R.string.pref_key_update_on_startup), false);
     }
 
     public boolean isUpdateAllowBeta() {
-        return preferences.getBoolean(resources.getString(R.string.pref_key_update_allow_beta), false);
+        return !isFDroidRelease() && preferences.getBoolean(resources.getString(R.string.pref_key_update_allow_beta), false);
     }
 
     public boolean isRealTablet() {
@@ -390,12 +393,16 @@ public class ApplicationSettings {
         return isSFW;
     }
     
+    public boolean isFDroidRelease() {
+        return isFDroid;
+    }
+    
     public boolean useFakeBrowser() {
         return isSFWRelease();
     }
     
     public boolean enableAppUpdateCheck() {
-        return !isSFWRelease();
+        return !isSFWRelease() && !isFDroidRelease();
     }
     
     public boolean showAllChansList() {

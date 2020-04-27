@@ -78,6 +78,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="pref_key_last_clear_subscriptions">PREF_KEY_LAST_CLEAR_SUBSCRIPTIONS</string>
     <string name="pref_key_cache_maxsize">PREF_KEY_CACHE_MAXSIZE</string>
     <string name="pref_key_clear_cache">PREF_KEY_CLEAR_CACHE</string>
+    <string name="pref_key_cat_update">PREF_KEY_CAT_UPDATE</string>
     <string name="pref_key_update_on_startup">PREF_KEY_UPDATE_ON_STARTUP</string>
     <string name="pref_key_update_allow_beta">PREF_KEY_UPDATE_ALLOW_BETA</string>
     <string name="pref_key_about_version">PREF_KEY_ABOUT_VERSION</string>
