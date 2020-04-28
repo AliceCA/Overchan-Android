@@ -35,7 +35,7 @@ import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
 
 import nya.miku.wishmaster.R;
-import nya.miku.wishmaster.api.AbstractChanModule;
+import nya.miku.wishmaster.api.StormwallChanModule;
 import nya.miku.wishmaster.api.interfaces.CancellableTask;
 import nya.miku.wishmaster.api.interfaces.ProgressListener;
 import nya.miku.wishmaster.api.models.AttachmentModel;
@@ -74,7 +74,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
  * @author miku-nyan
  *
  */
-public class CirnoModule extends AbstractChanModule {
+public class CirnoModule extends StormwallChanModule {
     
     static final String IICHAN_NAME = "iichan.hk";
     static final String IICHAN_DOMAIN = "iichan.hk";
@@ -146,6 +146,7 @@ public class CirnoModule extends AbstractChanModule {
         try {
             responseModel = HttpStreamer.getInstance().getFromUrl(url, rqModel, httpClient, listener, task);
             if (responseModel.statusCode == 200) {
+                checkForStormwall(url, responseModel);
                 in = new CirnoReader(responseModel.stream,
                         url.startsWith(HARUHIISM_URL) ? DateFormats.HARUHIISM_DATE_FORMAT : DateFormats.IICHAN_DATE_FORMAT);
                 if (task != null && task.isCancelled()) throw new Exception("interrupted");
@@ -196,6 +197,7 @@ public class CirnoModule extends AbstractChanModule {
         try {
             responseModel = HttpStreamer.getInstance().getFromUrl(url, rqModel, httpClient, listener, task);
             if (responseModel.statusCode == 200) {
+                checkForStormwall(url, responseModel);
                 in = new CirnoCatalogReader(responseModel.stream);
                 if (task != null && task.isCancelled()) throw new Exception("interrupted");
                 return in.readPage();

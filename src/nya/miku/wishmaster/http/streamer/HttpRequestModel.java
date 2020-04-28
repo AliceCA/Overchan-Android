@@ -35,6 +35,7 @@ public class HttpRequestModel {
     private static final int METHOD_UNDEFINED = -1;
     static final int METHOD_GET = 0;
     static final int METHOD_POST = 1;
+    static final int METHOD_OPTIONS = 2;
     
     /** простой GET запрос, без проверки If-Modified */
     public static final HttpRequestModel DEFAULT_GET = builder().setGET().build();
@@ -103,6 +104,15 @@ public class HttpRequestModel {
             this.postEntity = postEntity;
             return this;
         }
+
+        /**
+         * Установить метод OPTIONS
+         */
+        public Builder setOPTIONS() {
+            this.method = METHOD_OPTIONS;
+            this.postEntity = null;
+            return this;
+        }
         
         /**
          * Отключить любой редирект: страница по редиректу не будет загружаться автоматически.
@@ -145,7 +155,7 @@ public class HttpRequestModel {
          */
         public HttpRequestModel build() {
             if (method == METHOD_UNDEFINED) throw new IllegalStateException("method not set");
-            if (method == METHOD_POST && checkIfModified) throw new IllegalStateException("check if-modified is available only for GET method");
+            if ((method == METHOD_POST || method == METHOD_OPTIONS) && checkIfModified) throw new IllegalStateException("check if-modified is available only for GET method");
             return new HttpRequestModel(method, checkIfModified, noRedirect, customHeaders, postEntity, timeoutValue);
         }
         
