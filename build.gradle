@@ -62,5 +62,8 @@ android {
         unofficial {
             applicationId 'unofficial.nya.miku.wishmaster'
         }
+        fdroid {
+            applicationId 'bus.chio.wishmaster'
+        }
     }
 }
