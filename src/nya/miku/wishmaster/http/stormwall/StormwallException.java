@@ -33,6 +33,7 @@ public class StormwallException extends InteractiveException {
     private String recaptcha3Key;
     private String origin;
     private String chanName;
+    private boolean recaptcha;
     
     @Override
     public String getServiceName() {
@@ -67,13 +68,19 @@ public class StormwallException extends InteractiveException {
         return STORMWALL_COOKIE_NAME;
     }
 
+    public boolean isRecaptcha() {
+        return recaptcha;
+    }
+
     public static StormwallException withRecaptcha(String url, String html, String chanName) {
         StormwallException res = new StormwallException();
         res.url = url;
         res.chanName = chanName;
-
+        res.recaptcha = true;
+        
         Matcher m = PATTERN_SITEKEY.matcher(html);
         if (m.find()) res.siteKey = m.group(1);
+        else return null;
 
         m = PATTERN_SWP_KEY.matcher(html);
         if (m.find()) res.swpKey = m.group(1);
@@ -91,6 +98,14 @@ public class StormwallException extends InteractiveException {
         } catch (Exception e) {
             Logger.e(TAG, e);
         }
+        return res;
+    }
+    
+    public static StormwallException antiDDOS(String url, String html, String chanName) {
+        StormwallException res = new StormwallException();
+        res.url = url;
+        res.chanName = chanName;
+        res.recaptcha = false;
         return res;
     }
 

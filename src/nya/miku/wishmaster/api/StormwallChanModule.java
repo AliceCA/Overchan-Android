@@ -149,6 +149,8 @@ public abstract class StormwallChanModule extends AbstractChanModule {
             return;
         }
         String html = new String(output.toByteArray());
-        throw StormwallException.withRecaptcha(url, html, getChanName());
+        StormwallException e = StormwallException.withRecaptcha(url, html, getChanName());
+        if (e == null) e = StormwallException.antiDDOS(url, html, getChanName());
+        throw e;
     }
 }
